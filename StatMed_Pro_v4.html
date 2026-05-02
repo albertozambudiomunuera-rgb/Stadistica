@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StatMed Pro — Análisis Estadístico Clínico</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:       #07080c;
+  --s1:       #0d0f16;
+  --s2:       #12151f;
+  --s3:       #181c28;
+  --s4:       #1e2335;
+  --br:       #252b3e;
+  --br2:      #2e3550;
+  --acc:      #4f8ef7;
+  --acc-glow: rgba(79,142,247,.25);
+  --grn:      #34d399;
+  --grn-glow: rgba(52,211,153,.2);
+  --pur:      #a78bfa;
+  --org:      #fb923c;
+  --red:      #f87171;
+  --yel:      #fbbf24;
+  --cya:      #22d3ee;
+  --tx:       #eef0f7;
+  --tx2:      #8892a4;
+  --tx3:      #c4cad8;
+  --r:        10px;
+  --r2:       6px;
+  --shadow:   0 4px 24px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg);
+  color:var(--tx);
+  font-family:'Outfit',sans-serif;
+  font-size:14px;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ===== HEADER ===== */
+header{
+  display:flex;align-items:center;gap:20px;
+  padding:0 28px;height:56px;
+  background:linear-gradient(90deg,var(--s1) 0%,var(--s2) 100%);
+  border-bottom:1px solid var(--br);
+  flex-shrink:0;position:relative;z-index:50;
+}
+.logo{
+  font-size:22px;font-weight:800;letter-spacing:-.8px;
+  background:linear-gradient(135deg,var(--acc),var(--cya));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.logo-sub{font-size:11px;color:var(--tx2);letter-spacing:.05em;font-weight:400;}
+.hpills{display:flex;gap:8px;margin-left:auto;}
+.hpill{
+  padding:4px 14px;border-radius:20px;font-size:11px;font-weight:600;
+  border:1px solid;letter-spacing:.03em;
+  font-family:'JetBrains Mono',monospace;
+}
+.hpill.blue{background:rgba(79,142,247,.1);border-color:rgba(79,142,247,.35);color:var(--acc);}
+.hpill.green{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.3);color:var(--grn);}
+.hpill.gray{background:rgba(255,255,255,.04);border-color:var(--br);color:var(--tx2);}
+
+/* ===== LAYOUT ===== */
+.app{display:flex;flex:1;overflow:hidden;}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:270px;min-width:270px;
+  background:var(--s1);
+  border-right:1px solid var(--br);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.sb-section{
+  border-bottom:1px solid var(--br);
+  flex-shrink:0;
+}
+.sb-section-hd{
+  padding:12px 16px;
+  font-size:10px;font-weight:700;
+  color:var(--tx2);
+  text-transform:uppercase;letter-spacing:.12em;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.sb-vars{flex:1;overflow-y:auto;padding:6px 8px;}
+
+/* Upload zone */
+.upload-zone{
+  margin:12px;
+  border:2px dashed var(--br2);
+  border-radius:var(--r);
+  padding:20px 12px;
+  text-align:center;cursor:pointer;
+  transition:all .2s;
+  background:rgba(79,142,247,.03);
+  position:relative;
+}
+.upload-zone:hover,.upload-zone.over{
+  border-color:var(--acc);
+  background:rgba(79,142,247,.08);
+}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.uz-icon{font-size:26px;margin-bottom:6px;}
+.uz-txt{font-size:12px;color:var(--tx2);line-height:1.5;}
+.uz-txt strong{color:var(--tx3);}
+
+/* Var rows */
+.vrow{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 8px;border-radius:var(--r2);
+  margin-bottom:2px;
+  border:1px solid transparent;
+  transition:background .12s;
+}
+.vrow:hover{background:var(--s3);}
+.vrow.active{background:rgba(79,142,247,.08);border-color:rgba(79,142,247,.2);}
+.vrow-name{
+  flex:1;font-size:12px;font-weight:500;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--tx3);
+}
+.type-sel{
+  background:var(--s3);border:1px solid var(--br);
+  color:var(--tx2);padding:3px 7px;border-radius:5px;
+  font-size:11px;font-family:'JetBrains Mono',monospace;
+  cursor:pointer;outline:none;transition:all .15s;
+  -webkit-appearance:none;
+  padding-right:20px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238892a4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 6px center;
+}
+.type-sel:focus{border-color:var(--acc);}
+.type-sel.quant{color:var(--grn);border-color:rgba(52,211,153,.4);background-color:rgba(52,211,153,.07);}
+.type-sel.qual{color:var(--pur);border-color:rgba(167,139,250,.35);background-color:rgba(167,139,250,.07);}
+.type-sel.time{color:var(--org);border-color:rgba(251,146,60,.35);background-color:rgba(251,146,60,.07);}
+.type-sel.event{color:var(--yel);border-color:rgba(251,191,36,.35);background-color:rgba(251,191,36,.07);}
+.type-sel.excl{color:var(--tx2);opacity:.5;}
+
+/* ===== CONTENT ===== */
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TABS */
+.tabs{
+  display:flex;background:var(--s1);
+  border-bottom:1px solid var(--br);
+  padding:0 20px;gap:2px;flex-shrink:0;
+  overflow-x:auto;
+}
+.tab{
+  padding:14px 18px;font-size:13px;font-weight:500;
+  color:var(--tx2);cursor:pointer;
+  border-bottom:2px solid transparent;
+  white-space:nowrap;transition:all .15s;
+}
+.tab:hover{color:var(--tx3);}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc);}
+
+/* PANEL */
+.panel{flex:1;overflow-y:auto;padding:24px;}
+.panel-inner{max-width:1200px;margin:0 auto;}
+
+/* CARDS */
+.card{
+  background:var(--s1);
+  border:1px solid var(--br);
+  border-radius:var(--r);
+  padding:22px;margin-bottom:20px;
+}
+.card-hd{
+  font-size:15px;font-weight:700;margin-bottom:18px;
+  display:flex;align-items:center;gap:10px;
+  color:var(--tx);
+}
+.card-hd .ico{
+  width:28px;height:28px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+}
+.ico.blue{background:rgba(79,142,247,.15);}
+.ico.green{background:rgba(52,211,153,.15);}
+.ico.purple{background:rgba(167,139,250,.15);}
+.ico.orange{background:rgba(251,146,60,.15);}
+.ico.red{background:rgba(248,113,113,.15);}
+.ico.cyan{background:rgba(34,211,238,.15);}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:10px;}
+.sbox{
+  background:var(--s2);border:1px solid var(--br);
+  border-radius:8px;padding:14px 10px;text-align:center;
+  transition:border-color .2s;
+}
+.sbox:hover{border-color:var(--br2);}
+.sval{
+  font-size:19px;font-weight:700;color:var(--acc);
+  font-family:'JetBrains Mono',monospace;line-height:1.1;
+}
+.slbl{font-size:10px;color:var(--tx2);margin-top:4px;text-transform:uppercase;letter-spacing:.06em;}
+
+/* TABLE */
+.tw{overflow:auto;max-height:440px;border-radius:8px;border:1px solid var(--br);}
+.dt{width:100%;border-collapse:collapse;font-size:12px;}
+.dt th{
+  background:var(--s3);padding:9px 14px;text-align:left;
+  font-size:10px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--tx2);border-bottom:2px solid var(--br);
+  position:sticky;top:0;z-index:1;
+}
+.dt td{padding:8px 14px;border-bottom:1px solid var(--br);color:var(--tx3);}
+.dt tr:hover td{background:rgba(255,255,255,.015);}
+.dt td strong{color:var(--tx);}
+
+/* FORM */
+.fr{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:18px;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+select,input[type=number],input[type=text],input[type=range]{
+  background:var(--s2);border:1px solid var(--br2);
+  border-radius:var(--r2);color:var(--tx);
+  padding:8px 12px;font-family:'Outfit',sans-serif;font-size:13px;
+  min-width:170px;outline:none;cursor:pointer;transition:border-color .15s;
+}
+select:focus,input:focus{border-color:var(--acc);}
+input[type=range]{padding:4px 0;cursor:grab;min-width:120px;}
+.btn{
+  background:var(--acc);color:#fff;border:none;border-radius:var(--r2);
+  padding:9px 20px;font-family:'Outfit',sans-serif;font-size:13px;
+  font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.02em;
+}
+.btn:hover{background:#3b7de8;transform:translateY(-1px);box-shadow:0 4px 16px rgba(79,142,247,.35);}
+.btn.sec{background:var(--s3);color:var(--tx3);border:1px solid var(--br);}
+.btn.sec:hover{background:var(--s4);transform:translateY(-1px);}
+.btn.grn{background:var(--grn);color:#051f14;}
+.btn.grn:hover{background:#2bc48a;box-shadow:0 4px 16px rgba(52,211,153,.35);}
+
+/* RESULT */
+.rb{background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:18px;margin-top:14px;}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--br);}
+.rrow:last-child{border-bottom:none;}
+.rk{color:var(--tx2);font-size:13px;}
+.rv{font-weight:600;color:var(--tx);font-family:'JetBrains Mono',monospace;font-size:13px;}
+.pval-display{
+  font-size:28px;font-weight:800;text-align:center;padding:18px 10px;
+  font-family:'JetBrains Mono',monospace;
+}
+.pval-display span{font-size:12px;font-weight:400;display:block;color:var(--tx2);margin-top:4px;font-family:'Outfit',sans-serif;}
+.pval-display.sig{color:var(--red);}
+.pval-display.ns{color:var(--grn);}
+.interp{margin-top:12px;padding:12px 16px;border-radius:8px;font-size:12px;line-height:1.6;border-left:3px solid;}
+.interp.sig{background:rgba(248,113,113,.08);border-color:var(--red);color:#fca5a5;}
+.interp.ns{background:rgba(52,211,153,.08);border-color:var(--grn);color:#86efac;}
+.interp.info{background:rgba(79,142,247,.08);border-color:var(--acc);color:#93c5fd;}
+.interp.warn{background:rgba(251,191,36,.08);border-color:var(--yel);color:#fde68a;}
+
+/* NORM CHIP */
+.nc{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:12px;font-size:10px;font-weight:700;}
+.nc.ok{background:rgba(52,211,153,.15);color:var(--grn);}
+.nc.no{background:rgba(248,113,113,.15);color:var(--red);}
+
+/* FREQ BARS */
+.fbar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;}
+.fbar-lbl{width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx3);flex-shrink:0;font-size:11px;}
+.fbar-bg{flex:1;height:16px;background:var(--s3);border-radius:3px;overflow:hidden;}
+.fbar-fill{height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+.fbar-pct{width:72px;text-align:right;color:var(--tx2);font-size:11px;font-family:'JetBrains Mono',monospace;}
+
+/* CHART CONTAINER */
+.ch-wrap{
+  background:var(--s2);border:1px solid var(--br);
+  border-radius:var(--r);padding:20px;
+  position:relative;
+}
+.ch-title{font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:14px;text-transform:uppercase;letter-spacing:.08em;}
+.ch-controls{
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;
+  padding:12px;background:var(--s3);border-radius:8px;border:1px solid var(--br);
+}
+.ch-ctrl{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--tx2);}
+.ch-ctrl input,
+.ch-ctrl select{min-width:100px;font-size:11px;padding:5px 8px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+
+/* CORR MATRIX */
+.cm-table{border-collapse:collapse;font-size:11px;font-family:'JetBrains Mono',monospace;}
+.cm-table td,.cm-table th{padding:7px 10px;text-align:center;border:1px solid var(--br);}
+.cm-table th{background:var(--s3);color:var(--tx2);}
+
+/* INFO BAR */
+.ibar{
+  background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);
+  border-radius:8px;padding:10px 18px;
+  display:flex;gap:24px;margin-bottom:22px;font-size:12px;flex-wrap:wrap;
+}
+.ib-i span{color:var(--tx2);} .ib-i strong{color:var(--grn);}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:80px 32px;color:var(--tx2);}
+.empty-ico{font-size:52px;margin-bottom:16px;opacity:.4;}
+.empty-t{font-size:20px;font-weight:700;color:var(--tx3);margin-bottom:8px;}
+.empty-s{font-size:13px;line-height:1.6;max-width:360px;margin:0 auto;}
+
+/* LANDING */
+.landing{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;padding:40px;text-align:center;
+}
+.landing-title{
+  font-size:42px;font-weight:800;letter-spacing:-1.5px;margin-bottom:12px;
+  background:linear-gradient(135deg,var(--tx) 30%,var(--acc));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.landing-sub{font-size:15px;color:var(--tx2);margin-bottom:48px;max-width:480px;line-height:1.6;}
+.landing-upload{
+  border:2px dashed var(--br2);border-radius:16px;
+  padding:48px 64px;cursor:pointer;
+  transition:all .25s;position:relative;
+  background:rgba(79,142,247,.03);
+}
+.landing-upload:hover,.landing-upload.over{
+  border-color:var(--acc);
+  background:rgba(79,142,247,.07);
+  transform:translateY(-2px);
+  box-shadow:0 8px 32px var(--acc-glow);
+}
+.landing-upload input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.lu-icon{font-size:48px;margin-bottom:12px;}
+.lu-t{font-size:16px;font-weight:600;margin-bottom:6px;}
+.lu-s{font-size:13px;color:var(--tx2);}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px;max-width:700px;}
+.feat{background:var(--s2);border:1px solid var(--br);border-radius:10px;padding:18px;text-align:left;}
+.feat-ico{font-size:20px;margin-bottom:8px;}
+.feat-t{font-size:13px;font-weight:600;margin-bottom:4px;}
+.feat-d{font-size:11px;color:var(--tx2);line-height:1.5;}
+
+/* CHART EXPORT BTN */
+.ch-export{
+  position:absolute;top:12px;right:12px;
+  background:rgba(79,142,247,.12);
+  border:1px solid rgba(79,142,247,.3);
+  color:var(--acc);padding:5px 12px;border-radius:6px;
+  font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;
+  font-family:'Outfit',sans-serif;letter-spacing:.02em;
+}
+.ch-export:hover{
+  background:rgba(79,142,247,.25);
+  border-color:var(--acc);
+  transform:translateY(-1px);
+  box-shadow:0 3px 12px rgba(79,142,247,.3);
+}
+
+/* SEGMENT CONTROL */
+.seg{display:flex;background:var(--s3);border:1px solid var(--br);border-radius:7px;padding:3px;gap:3px;}
+.seg-btn{
+  padding:5px 14px;border-radius:5px;cursor:pointer;
+  font-size:12px;font-weight:500;color:var(--tx2);transition:all .15s;border:none;
+  background:transparent;font-family:'Outfit',sans-serif;
+}
+.seg-btn.on{background:var(--acc);color:#fff;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--br2);border-radius:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+.hidden{display:none!important;}
+.sep{height:1px;background:var(--br);margin:20px 0;}
+
+/* KM specific */
+.km-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;}
+.km-leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx3);}
+.km-leg-dot{width:12px;height:3px;border-radius:2px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">StatMed Pro</div>
+    <div class="logo-sub">Análisis Estadístico Clínico · v3.0</div>
+  </div>
+  <div class="hpills" id="hpills" style="display:none">
+    <span class="hpill green" id="pill_n">—</span>
+    <span class="hpill blue" id="pill_v">—</span>
+    <span class="hpill gray" id="pill_f">—</span>
+    <button class="hpill gray" style="cursor:pointer;border:1px solid var(--br)" onclick="resetApp()">↩ Nuevo archivo</button>
+  </div>
+</header>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar" style="display:none">
+    <div class="sb-section">
+      <div class="sb-section-hd">Variables <span style="font-size:9px;color:var(--acc)">▸ cambia tipo si es incorrecto</span></div>
+    </div>
+    <div class="sb-vars" id="varList"></div>
+    <div style="padding:10px 8px;border-top:1px solid var(--br);flex-shrink:0;">
+      <button class="btn sec" style="width:100%;font-size:11px" onclick="triggerNewUpload()">📂 Cargar otro archivo</button>
+      <input type="file" id="newFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleNewFile(this)">
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <!-- TABS (hidden until data loaded) -->
+    <div class="tabs hidden" id="tabBar">
+      <div class="tab on" data-t="resumen">📋 Resumen</div>
+      <div class="tab" data-t="descriptiva">📊 Descriptiva</div>
+      <div class="tab" data-t="graficos">📈 Gráficos</div>
+      <div class="tab" data-t="tests">🧪 Tests</div>
+      <div class="tab" data-t="correlacion">🔗 Correlación</div>
+      <div class="tab" data-t="supervivencia">🩺 Supervivencia</div>
+      <div class="tab" data-t="regresion">📉 Regresión</div>
+      <div class="tab" data-t="datos">🗃 Datos</div>
+    </div>
+    <div class="panel" id="panel">
+      <div id="panelInner"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════
+let DATA = [];
+let COLS = [];   // [{name, type:'cuantitativa'|'cualitativa'|'tiempo'|'evento'|'excluir'}]
+let CHARTS = {}; // id -> Chart instance
+let ACTIVE_TAB = 'resumen';
+let FILENAME = '';
+
+// ══════════════════════════════════════════════════
+//  PALETTE for charts
+// ══════════════════════════════════════════════════
+const PAL = ['#4f8ef7','#34d399','#a78bfa','#fb923c','#f87171','#22d3ee','#fbbf24','#ec4899','#84cc16','#06b6d4'];
+const PAL_ALPHA = a => PAL.map(c => c + Math.round(a*255).toString(16).padStart(2,'0'));
+
+// ══════════════════════════════════════════════════
+//  MATH UTILITIES
+// ══════════════════════════════════════════════════
+const toNum = arr => arr.map(v=>parseFloat(v)).filter(v=>!isNaN(v));
+const mean  = a => a.length ? a.reduce((s,v)=>s+v,0)/a.length : NaN;
+const sum   = a => a.reduce((s,v)=>s+v,0);
+const variance = a => { const m=mean(a); return a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1); };
+const sd    = a => Math.sqrt(variance(a));
+const median= a => { const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+const pct   = (a,p) => { const s=[...a].sort((x,y)=>x-y),idx=(p/100)*(s.length-1),lo=Math.floor(idx),hi=Math.ceil(idx); return s[lo]+(s[hi]-s[lo])*(idx-lo); };
+const fmt   = n => { if(n===null||n===undefined||isNaN(n))return '—'; if(Math.abs(n)<0.0001&&n!==0)return n.toExponential(3); return parseFloat(n.toFixed(4)).toString(); };
+const fmtP  = p => p<0.001?'< 0.001':p.toFixed(3);
+const getVals = col => DATA.map(r=>r[col]).filter(v=>v!==''&&v!==null&&v!==undefined);
+
+function rank(arr){
+  const s=[...arr].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
+  const ranks=new Array(arr.length);
+  for(let i=0;i<arr.length;){
+    let j=i;while(j<arr.length&&s[j].v===s[i].v)j++;
+    const av=(i+j-1)/2+1;
+    for(let k=i;k<j;k++)ranks[s[k].i]=av;
+    i=j;
+  }
+  return ranks;
+}
+
+// CDFs
+function normalCDF(x){
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign=x<0?-1:1;x=Math.abs(x)/Math.SQRT2;
+  const t=1/(1+p*x),y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return 0.5*(1+sign*y);
+}
+function logGamma(z){
+  const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,.1208650973866179e-2,-.5395239384953e-5];
+  let x=z,y=z,tmp=x+5.5;tmp-=(x+.5)*Math.log(tmp);
+  let ser=1.000000000190015;for(let j=0;j<6;j++)ser+=c[j]/++y;
+  return -tmp+Math.log(2.5066282746310005*ser/x);
+}
+function incBeta(a,b,x){
+  if(x===0)return 0;if(x===1)return 1;
+  const lb=logGamma(a)+logGamma(b)-logGamma(a+b),fr=Math.exp(Math.log(x)*a+Math.log(1-x)*b-lb);
+  function cf(a,b,x){let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-(qab*x/qap);if(Math.abs(d)<1e-30)d=1e-30;d=1/d;let h=d;for(let m=1;m<=200;m++){let m2=2*m,aa=m*(b-m)*x/((qam+m2)*(a+m2));d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<1e-10)break;}return h;}
+  return x<(a+1)/(a+b+2)?fr*cf(a,b,x)/a:1-fr*cf(b,a,1-x)/b;
+}
+const tCDF  = (t,df) => 1-0.5*incBeta(df/2,.5,df/(df+t*t));
+const fCDF  = (f,d1,d2) => 1-incBeta(d2/2,d1/2,d2/(d2+d1*f));
+function chi2CDF(x,k){
+  if(x<=0)return 0;
+  let s=0,t=Math.exp(-x/2+k/2*Math.log(x/2)-logGamma(k/2));
+  for(let i=0;i<500;i++){s+=t;const prev=t;t*=x/(k+2*i+2);if(t<1e-15)break;}
+  return Math.min(1,s);
+}
+
+// Statistical tests
+function shapiroApprox(arr){
+  const m=mean(arr),s=sd(arr);if(!s)return{W:1,p:1,skew:0,kurt:0};
+  const n=arr.length;
+  const skew=arr.reduce((a,v)=>a+((v-m)/s)**3,0)*n/((n-1)*(n-2));
+  const k4=n*(n+1)*arr.reduce((a,v)=>a+((v-m)/s)**4,0)/((n-1)*(n-2)*(n-3))-3*(n-1)**2/((n-2)*(n-3));
+  const W=Math.max(0,Math.min(1,1-Math.abs(skew)*.05-Math.abs(k4)*.01));
+  const p=Math.min(1,Math.exp(-(skew**2+k4**2)/2));
+  return{W,p,skew,kurt:k4};
+}
+function mannWhitney(a,b){
+  let U1=0;
+  for(let i=0;i<a.length;i++)for(let j=0;j<b.length;j++){if(a[i]>b[j])U1++;else if(a[i]===b[j])U1+=.5;}
+  const U2=a.length*b.length-U1,U=Math.min(U1,U2);
+  const mu=a.length*b.length/2,sig=Math.sqrt(a.length*b.length*(a.length+b.length+1)/12);
+  const z=(U-mu)/sig;
+  return{U,z,p:2*(1-normalCDF(Math.abs(z)))};
+}
+function tTest(a,b){
+  const na=a.length,nb=b.length,ma=mean(a),mb=mean(b);
+  const sp=Math.sqrt(((na-1)*variance(a)+(nb-1)*variance(b))/(na+nb-2));
+  const t=(ma-mb)/(sp*Math.sqrt(1/na+1/nb)),df=na+nb-2;
+  return{t,df,p:2*(1-tCDF(Math.abs(t),df)),ma,mb,sa:sd(a),sb:sd(b)};
+}
+function pairedTTest(a,b){
+  const d=a.map((v,i)=>v-b[i]),md=mean(d),sdd=sd(d);
+  const t=md/(sdd/Math.sqrt(d.length)),df=d.length-1;
+  return{t,df,p:2*(1-tCDF(Math.abs(t),df)),md,sdd};
+}
+function wilcoxonSigned(a,b){
+  const d=a.map((v,i)=>v-b[i]).filter(v=>v!==0);
+  const abs=d.map(v=>Math.abs(v));const rnks=rank(abs);
+  let Wp=0,Wm=0;
+  d.forEach((v,i)=>{if(v>0)Wp+=rnks[i];else Wm+=rnks[i];});
+  const W=Math.min(Wp,Wm),n=d.length;
+  const mu=n*(n+1)/4,sig=Math.sqrt(n*(n+1)*(2*n+1)/24);
+  const z=(W-mu)/sig;
+  return{W,z,p:2*(1-normalCDF(Math.abs(z)))};
+}
+function oneAnova(gs){
+  const all=gs.flat(),gm=mean(all),N=all.length,k=gs.length;
+  const SSb=gs.reduce((a,g)=>a+g.length*(mean(g)-gm)**2,0);
+  const SSw=gs.reduce((a,g)=>a+g.reduce((s,v)=>s+(v-mean(g))**2,0),0);
+  const df1=k-1,df2=N-k,F=(SSb/df1)/(SSw/df2);
+  return{F,df1,df2,p:1-fCDF(F,df1,df2),SSb,SSw,eta2:SSb/(SSb+SSw)};
+}
+function kruskalWallis(gs){
+  const all=gs.flat(),N=all.length;
+  const rnks=rank(all);let idx=0;
+  const Ri=gs.map(g=>{ const s=g.map((_,i)=>rnks[idx+i]).reduce((a,b)=>a+b,0);idx+=g.length;return s; });
+  const H=12/(N*(N+1))*gs.reduce((a,g,i)=>a+Ri[i]**2/g.length,0)-3*(N+1);
+  const df=gs.length-1;
+  return{H,df,p:1-chi2CDF(H,df)};
+}
+function chiSq(cont){
+  const rs=cont.map(r=>r.reduce((a,b)=>a+b,0)),cs=cont[0].map((_,c)=>cont.reduce((a,r)=>a+r[c],0)),N=rs.reduce((a,b)=>a+b,0);
+  let chi2=0;
+  for(let i=0;i<cont.length;i++)for(let j=0;j<cont[0].length;j++){const E=rs[i]*cs[j]/N;if(E>0)chi2+=(cont[i][j]-E)**2/E;}
+  const df=(cont.length-1)*(cont[0].length-1);
+  const phi=Math.sqrt(chi2/N),cramers=phi/Math.sqrt(Math.min(cont.length,cont[0].length)-1);
+  return{chi2,df,p:1-chi2CDF(chi2,df),phi,cramers,N};
+}
+function fisherExact(a,b,c,d){
+  // odds ratio and p approximation via chi2
+  const cont=[[a,b],[c,d]];
+  const r=chiSq(cont);
+  const OR=(a*d)/(b*c);
+  return{...r,OR,CI_lo:OR*Math.exp(-1.96*Math.sqrt(1/a+1/b+1/c+1/d)),CI_hi:OR*Math.exp(1.96*Math.sqrt(1/a+1/b+1/c+1/d))};
+}
+function pearsonR(x,y){
+  const n=Math.min(x.length,y.length),xs=x.slice(0,n),ys=y.slice(0,n),mx=mean(xs),my=mean(ys);
+  const num=xs.reduce((a,xi,i)=>a+(xi-mx)*(ys[i]-my),0);
+  const den=Math.sqrt(xs.reduce((a,xi)=>a+(xi-mx)**2,0)*ys.reduce((a,yi)=>a+(yi-my)**2,0));
+  const r=den?num/den:0,t=r*Math.sqrt((n-2)/(1-r**2));
+  return{r,t,p:2*(1-tCDF(Math.abs(t),n-2)),n};
+}
+function spearmanR(x,y){
+  const n=Math.min(x.length,y.length);
+  return pearsonR(rank(x.slice(0,n)),rank(y.slice(0,n)));
+}
+
+// Kaplan-Meier
+function kaplanMeier(times,events){
+  const data=[...times.map((t,i)=>({t:parseFloat(t),e:parseInt(events[i])}))]
+    .filter(d=>!isNaN(d.t)&&!isNaN(d.e))
+    .sort((a,b)=>a.t-b.t);
+  let S=1,n=data.length;
+  const curve=[{t:0,S:1,n,d:0,ci_lo:1,ci_hi:1}];
+  let logLogVar=0;
+  const tSet=[...new Set(data.filter(d=>d.e===1).map(d=>d.t))].sort((a,b)=>a-b);
+  tSet.forEach(t=>{
+    const atRisk=data.filter(d=>d.t>=t).length;
+    const died=data.filter(d=>d.t===t&&d.e===1).length;
+    S*=(atRisk-died)/atRisk;
+    if(atRisk>died)logLogVar+=died/(atRisk*(atRisk-died));
+    const se=S>0?Math.sqrt(S**2*logLogVar):0;
+    const ci_lo=Math.max(0,S-1.96*se),ci_hi=Math.min(1,S+1.96*se);
+    curve.push({t,S,n:atRisk,d:died,ci_lo,ci_hi});
+  });
+  return curve;
+}
+
+// Log-rank test
+function logRank(km1,km2){
+  // Mantel-Cox
+  const allT=[...new Set([...km1.map(d=>d.t),...km2.map(d=>d.t)].filter(t=>t>0))].sort((a,b)=>a-b);
+  let O=0,E=0,V=0;
+  allT.forEach(t=>{
+    const p1=km1.find(d=>d.t===t),p2=km2.find(d=>d.t===t);
+    if(!p1&&!p2)return;
+    const n1=p1?p1.n:0,n2=p2?p2.n:0,d1=p1?p1.d:0,d2=p2?p2.d:0;
+    const N=n1+n2,D=d1+d2;
+    if(N<2)return;
+    const E1=D*n1/N;
+    O+=d1;E+=E1;
+    V+=D*n1*n2*(N-D)/(N**2*(N-1));
+  });
+  const chi2=V>0?(O-E)**2/V:0;
+  return{chi2,p:1-chi2CDF(chi2,1)};
+}
+
+// Logistic Regression (gradient descent)
+function logisticRegression(X,y,lr=0.05,iters=1000){
+  const n=X.length,p=X[0].length;
+  let w=new Array(p).fill(0),b=0;
+  const sig=z=>1/(1+Math.exp(-Math.max(-500,Math.min(500,z))));
+  for(let it=0;it<iters;it++){
+    let db=0,dw=new Array(p).fill(0);
+    for(let i=0;i<n;i++){
+      const z=w.reduce((s,wi,j)=>s+wi*X[i][j],b),pred=sig(z),err=pred-y[i];
+      db+=err;
+      w.forEach((_,j)=>dw[j]+=err*X[i][j]);
+    }
+    b-=lr*db/n;
+    w=w.map((wi,j)=>wi-lr*dw[j]/n);
+  }
+  // Compute p-values approx via Wald test
+  const preds=X.map(xi=>sig(w.reduce((s,wi,j)=>s+wi*xi[j],b)));
+  // Fisher info diagonal
+  const fi=new Array(p+1).fill(0);
+  const Xb=X.map(xi=>[1,...xi]);
+  preds.forEach((pi,i)=>{
+    const v=pi*(1-pi);
+    Xb[i].forEach((xij,j)=>fi[j]+=v*xij**2);
+  });
+  const se=fi.map(f=>f>0?1/Math.sqrt(f):Infinity);
+  const coefs=[b,...w],pvals=coefs.map((c,j)=>{
+    const z=c/se[j],p2=2*(1-normalCDF(Math.abs(z)));
+    return{coef:c,se:se[j],z,p:p2,OR:Math.exp(c),CI_lo:Math.exp(c-1.96*se[j]),CI_hi:Math.exp(c+1.96*se[j])};
+  });
+  // AUC (AUROC)
+  let auc=0;
+  const pairs=preds.map((p,i)=>({p,y:y[i]})).sort((a,b)=>b.p-a.p);
+  let tp=0,fp=0,prevTp=0,prevFp=0;
+  const pos=y.filter(v=>v===1).length,neg=y.filter(v=>v===0).length;
+  pairs.forEach(({p,y:yi})=>{
+    if(yi===1)tp++;else{fp++;auc+=(tp+prevTp)/2*(fp-prevFp);prevTp=tp;prevFp=fp;}
+  });
+  return{coefs:pvals,auc:pos&&neg?auc/(pos*neg):NaN,b,w,sig};
+}
+
+// ══════════════════════════════════════════════════
+//  FILE LOADING
+// ══════════════════════════════════════════════════
+function setupLanding(){
+  const el=document.getElementById('panelInner');
+  el.innerHTML=`<div class="landing">
+    <div class="landing-title">StatMed Pro</div>
+    <div class="landing-sub">Plataforma de análisis estadístico clínico. Carga tu base de datos y obtén estadística completa con gráficos interactivos y personalizables.</div>
+    <div class="landing-upload" id="landZone">
+      <input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])">
+      <div class="lu-icon">📊</div>
+      <div class="lu-t">Arrastra tu Excel aquí o haz clic</div>
+      <div class="lu-s">.xlsx · .xls · .csv · Hasta 50MB</div>
+    </div>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-ico">📊</div><div class="feat-t">Estadística descriptiva</div><div class="feat-d">Media, mediana, IQR, normalidad, frecuencias</div></div>
+      <div class="feat"><div class="feat-ico">🧪</div><div class="feat-t">Tests estadísticos</div><div class="feat-d">T-test, Mann-Whitney, ANOVA, Kruskal-Wallis, Chi², Fisher, Wilcoxon</div></div>
+      <div class="feat"><div class="feat-ico">📈</div><div class="feat-t">Gráficos personalizables</div><div class="feat-d">Colores, títulos, tamaños, exportación PNG</div></div>
+      <div class="feat"><div class="feat-ico">🩺</div><div class="feat-t">Kaplan-Meier + Log-rank</div><div class="feat-d">Curvas de supervivencia con IC 95% y comparación</div></div>
+      <div class="feat"><div class="feat-ico">📉</div><div class="feat-t">Regresión logística</div><div class="feat-d">Odds ratios, forest plot, AUC-ROC</div></div>
+      <div class="feat"><div class="feat-ico">🔗</div><div class="feat-t">Correlación</div><div class="feat-d">Pearson, Spearman, matriz de correlación</div></div>
+    </div>
+  </div>`;
+  const lz=document.getElementById('landZone');
+  lz.addEventListener('dragover',e=>{e.preventDefault();lz.classList.add('over');});
+  lz.addEventListener('dragleave',()=>lz.classList.remove('over'));
+  lz.addEventListener('drop',e=>{e.preventDefault();lz.classList.remove('over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+}
+
+function handleFile(file){
+  FILENAME=file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      let json;
+      if(file.name.endsWith('.csv')){
+        const wb=XLSX.read(e.target.result,{type:'string'});
+        json=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      }else{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        json=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      }
+      if(!json.length){alert('El archivo está vacío.');return;}
+      loadData(json);
+    }catch(err){alert('Error al leer el archivo: '+err.message);}
+  };
+  if(file.name.endsWith('.csv'))reader.readAsText(file);
+  else reader.readAsArrayBuffer(file);
+}
+
+function autoType(col,vals){
+  const str=col.trim().toLowerCase();
+  if(str.includes('tiempo')||str.includes('time')||str.includes('surv')||str.includes('follow')||str.includes('superviv')||str.includes('os')||str.includes('pfs'))return'tiempo';
+  if(str.includes('evento')||str.includes('event')||str.includes('muerte')||str.includes('death')||str.includes('status'))return'evento';
+  const nonNull=vals.filter(v=>v!==''&&v!=null);
+  if(!nonNull.length)return'excluir';
+  const nums=nonNull.filter(v=>!isNaN(parseFloat(v))&&isFinite(v));
+  if(nums.length/nonNull.length>0.8){
+    const uniq=new Set(nums.map(Number));
+    if(uniq.size===2)return'evento';
+    return'cuantitativa';
+  }
+  return'cualitativa';
+}
+
+function loadData(json){
+  DATA=json.map(row=>{
+    const clean={};
+    Object.keys(row).forEach(k=>{ clean[k.trim()]=typeof row[k]==='string'?row[k].trim():row[k]; });
+    return clean;
+  });
+  const cols=Object.keys(DATA[0]);
+  COLS=cols.map(name=>({name,type:autoType(name,DATA.map(r=>r[name]))}));
+
+  // Update header
+  document.getElementById('pill_n').textContent=`${DATA.length} registros`;
+  document.getElementById('pill_v').textContent=`${COLS.length} variables`;
+  document.getElementById('pill_f').textContent=FILENAME.length>20?FILENAME.slice(0,17)+'…':FILENAME;
+  document.getElementById('hpills').style.display='flex';
+  document.getElementById('sidebar').style.display='flex';
+  document.getElementById('tabBar').classList.remove('hidden');
+
+  buildSidebar();
+  switchTab('resumen');
+}
+
+function resetApp(){
+  DATA=[];COLS=[];destroyAllCharts();FILENAME='';
+  document.getElementById('hpills').style.display='none';
+  document.getElementById('sidebar').style.display='none';
+  document.getElementById('tabBar').classList.add('hidden');
+  document.querySelectorAll('.tab').forEach(t=>{t.classList.toggle('on',t.dataset.t==='resumen');});
+  ACTIVE_TAB='resumen';
+  setupLanding();
+}
+
+function triggerNewUpload(){document.getElementById('newFileInput').click();}
+function handleNewFile(inp){if(inp.files[0]){handleFile(inp.files[0]);inp.value='';}}
+
+// ══════════════════════════════════════════════════
+//  SIDEBAR
+// ══════════════════════════════════════════════════
+function buildSidebar(){
+  const cls=(t)=>t==='cuantitativa'?'quant':t==='cualitativa'?'qual':t==='tiempo'?'time':t==='evento'?'event':'excl';
+  document.getElementById('varList').innerHTML=COLS.map((c,i)=>`
+    <div class="vrow${c.type!=='excluir'?' active':''}" id="vr${i}">
+      <span class="vr-name" title="${c.name}">${c.name}</span>
+      <select class="type-sel ${cls(c.type)}" onchange="changeType(${i},this)">
+        <option value="cuantitativa"${c.type==='cuantitativa'?' selected':''}>Cuant.</option>
+        <option value="cualitativa"${c.type==='cualitativa'?' selected':''}>Cual.</option>
+        <option value="tiempo"${c.type==='tiempo'?' selected':''}>Tiempo</option>
+        <option value="evento"${c.type==='evento'?' selected':''}>Evento</option>
+        <option value="excluir"${c.type==='excluir'?' selected':''}>Excluir</option>
+      </select>
+    </div>`).join('');
+}
+
+function changeType(i,sel){
+  COLS[i].type=sel.value;
+  const cls=(t)=>t==='cuantitativa'?'quant':t==='cualitativa'?'qual':t==='tiempo'?'time':t==='evento'?'event':'excl';
+  sel.className=`type-sel ${cls(sel.value)}`;
+  const vr=document.getElementById(`vr${i}`);
+  if(vr)vr.classList.toggle('active',sel.value!=='excluir');
+  destroyAllCharts();
+  renderTab(ACTIVE_TAB);
+}
+
+// ══════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>switchTab(t.dataset.t));
+});
+
+function switchTab(name){
+  ACTIVE_TAB=name;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.t===name));
+  destroyAllCharts();
+  renderTab(name);
+}
+
+function renderTab(name){
+  const fns={resumen:renderResumen,descriptiva:renderDescriptiva,graficos:renderGraficos,
+              tests:renderTests,correlacion:renderCorrelacion,supervivencia:renderSupervivencia,
+              regresion:renderRegresion,datos:renderDatos};
+  if(fns[name])fns[name]();
+}
+
+// ══════════════════════════════════════════════════
+//  CHART HELPERS
+// ══════════════════════════════════════════════════
+function destroyAllCharts(){
+  Object.values(CHARTS).forEach(c=>{try{c.destroy();}catch(e){}});
+  CHARTS={};
+}
+function mkChart(id,config){
+  if(CHARTS[id]){try{CHARTS[id].destroy();}catch(e){}}
+  const el=document.getElementById(id);
+  if(!el)return;
+  CHARTS[id]=new Chart(el,config);
+  return CHARTS[id];
+}
+
+const CHART_DEFAULTS = {
+  plugins:{legend:{labels:{color:'#8892a4',font:{family:'Outfit',size:12}}}},
+  scales:{
+    x:{ticks:{color:'#8892a4',font:{family:'Outfit',size:11}},grid:{color:'rgba(37,43,62,.8)'}},
+    y:{ticks:{color:'#8892a4',font:{family:'Outfit',size:11}},grid:{color:'rgba(37,43,62,.8)'}}
+  }
+};
+
+// ── EXPORT MODAL ──────────────────────────────────
+function exportChart(id, name) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  openExportModal(id, name);
+}
+
+function openExportModal(canvasId, suggestedName) {
+  // Remove any existing modal
+  const old = document.getElementById('_exp_modal');
+  if (old) old.remove();
+
+  const modal = document.createElement('div');
+  modal.id = '_exp_modal';
+  modal.innerHTML = `
+    <div id="_exp_backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+      <div style="background:#1a1f2e;border:1px solid #30363d;border-radius:14px;padding:28px 32px;width:520px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.7);">
+        <div style="font-size:17px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px">🎨</span> Exportar gráfico
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <label style="font-size:11px;color:#8892a4;text-transform:uppercase;letter-spacing:.07em;">Nombre del archivo</label>
+            <input id="_exp_name" type="text" value="${(suggestedName||canvasId).replace(/['"]/g,'')}" style="background:#0d0f16;border:1px solid #30363d;border-radius:6px;color:#eef0f7;padding:8px 10px;font-family:Outfit,sans-serif;font-size:13px;outline:none;">
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <label style="font-size:11px;color:#8892a4;text-transform:uppercase;letter-spacing:.07em;">Resolución (escala)</label>
+            <select id="_exp_scale" style="background:#0d0f16;border:1px solid #30363d;border-radius:6px;color:#eef0f7;padding:8px 10px;font-family:Outfit,sans-serif;font-size:13px;outline:none;">
+              <option value="1">1× — pantalla</option>
+              <option value="2" selected>2× — alta resolución</option>
+              <option value="3">3× — impresión</option>
+              <option value="4">4× — póster</option>
+            </select>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <label style="font-size:11px;color:#8892a4;text-transform:uppercase;letter-spacing:.07em;">Fondo</label>
+            <div style="display:flex;gap:8px;">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                <input type="radio" name="_exp_bg" value="white" checked> Blanco
+              </label>
+              <label style="display:flex;align-items:center;gap=6px;cursor:pointer;font-size:13px;margin-left:12px;">
+                <input type="radio" name="_exp_bg" value="dark"> Oscuro
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;margin-left:12px;">
+                <input type="radio" name="_exp_bg" value="transparent"> Transparente
+              </label>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <label style="font-size:11px;color:#8892a4;text-transform:uppercase;letter-spacing:.07em;">Formato</label>
+            <select id="_exp_fmt" style="background:#0d0f16;border:1px solid #30363d;border-radius:6px;color:#eef0f7;padding:8px 10px;font-family:Outfit,sans-serif;font-size:13px;outline:none;">
+              <option value="png">PNG</option>
+              <option value="jpeg">JPEG</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div style="background:#0d0f16;border:1px solid #252b3e;border-radius:10px;padding:16px;margin-bottom:20px;">
+          <div style="font-size:11px;font-weight:700;color:#8892a4;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;">Texto y colores del gráfico exportado</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <label style="font-size:11px;color:#8892a4;">Color texto</label>
+              <input id="_exp_txtcolor" type="color" value="#222222" style="width:100%;height:32px;padding:2px;border-radius:5px;border:1px solid #30363d;cursor:pointer;background:#0d0f16;">
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <label style="font-size:11px;color:#8892a4;">Color grid</label>
+              <input id="_exp_gridcolor" type="color" value="#dddddd" style="width:100%;height:32px;padding:2px;border-radius:5px;border:1px solid #30363d;cursor:pointer;background:#0d0f16;">
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <label style="font-size:11px;color:#8892a4;">Tamaño fuente</label>
+              <input id="_exp_fontsize" type="number" value="13" min="8" max="24" style="background:#0d0f16;border:1px solid #30363d;border-radius:5px;color:#eef0f7;padding:6px 8px;font-family:Outfit,sans-serif;font-size:12px;outline:none;">
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <label style="font-size:11px;color:#8892a4;">Fuente</label>
+              <select id="_exp_font" style="background:#0d0f16;border:1px solid #30363d;border-radius:5px;color:#eef0f7;padding:6px 8px;font-family:Outfit,sans-serif;font-size:12px;outline:none;">
+                <option value="Outfit">Outfit (por defecto)</option>
+                <option value="Arial">Arial</option>
+                <option value="Helvetica">Helvetica</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Calibri">Calibri</option>
+              </select>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <label style="font-size:11px;color:#8892a4;">Grosor borde barras</label>
+              <input id="_exp_bw" type="number" value="1" min="0" max="4" style="background:#0d0f16;border:1px solid #30363d;border-radius:5px;color:#eef0f7;padding:6px 8px;font-family:Outfit,sans-serif;font-size:12px;outline:none;">
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <label style="font-size:11px;color:#8892a4;">Opacidad barras</label>
+              <input id="_exp_alpha" type="range" min="30" max="100" value="80" style="width:100%;margin-top:6px;">
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Preview note -->
+        <div id="_exp_preview_note" style="font-size:11px;color:#8892a4;margin-bottom:16px;text-align:center;">
+          Vista previa disponible al generar
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button onclick="document.getElementById('_exp_backdrop').remove()" style="background:#1e2335;border:1px solid #30363d;color:#c4cad8;padding:9px 20px;border-radius:7px;font-family:Outfit,sans-serif;font-size:13px;font-weight:600;cursor:pointer;">Cancelar</button>
+          <button onclick="doExport('${canvasId}')" style="background:#4f8ef7;color:#fff;border:none;padding:9px 24px;border-radius:7px;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;cursor:pointer;">⬇ Descargar PNG</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  // Close on backdrop click
+  document.getElementById('_exp_backdrop').addEventListener('click', e => {
+    if (e.target === document.getElementById('_exp_backdrop')) modal.remove();
+  });
+}
+
+function doExport(canvasId) {
+  const srcCanvas = document.getElementById(canvasId);
+  if (!srcCanvas) return;
+
+  const scale    = parseFloat(document.getElementById('_exp_scale').value) || 2;
+  const bgChoice = document.querySelector('input[name="_exp_bg"]:checked').value;
+  const fmt      = document.getElementById('_exp_fmt').value;
+  const name     = document.getElementById('_exp_name').value || canvasId;
+  const txtColor = document.getElementById('_exp_txtcolor').value;
+  const gridColor= document.getElementById('_exp_gridcolor').value;
+  const fontSize = parseInt(document.getElementById('_exp_fontsize').value) || 13;
+  const fontFam  = document.getElementById('_exp_font').value;
+  const bw       = parseFloat(document.getElementById('_exp_bw').value);
+  const alphaRaw = parseInt(document.getElementById('_exp_alpha').value);
+  const alpha    = Math.round(alphaRaw / 100 * 255).toString(16).padStart(2,'0');
+
+  // Find the Chart.js instance for this canvas
+  const chartInst = CHARTS[canvasId];
+
+  // Build an offscreen canvas at target resolution
+  const W = srcCanvas.offsetWidth  * scale;
+  const H = srcCanvas.offsetHeight * scale;
+  const offscreen = document.createElement('canvas');
+  offscreen.width  = W;
+  offscreen.height = H;
+  const ctx = offscreen.getContext('2d');
+
+  // Background
+  if (bgChoice === 'white') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+  } else if (bgChoice === 'dark') {
+    ctx.fillStyle = '#07080c';
+    ctx.fillRect(0, 0, W, H);
+  }
+  // transparent → no fill
+
+  if (chartInst) {
+    // Temporarily patch chart options for clean export
+    const cfg = chartInst.config;
+    const opts = cfg.options || {};
+
+    // Save originals
+    const savedDefaults = {
+      color:    Chart.defaults.color,
+      font:     { ...Chart.defaults.font },
+      borderColor: Chart.defaults.borderColor,
+    };
+
+    // Apply export styles globally
+    Chart.defaults.color = txtColor;
+    Chart.defaults.font.family = fontFam;
+    Chart.defaults.font.size   = fontSize;
+    Chart.defaults.borderColor = gridColor;
+
+    // Patch per-axis grid & tick colors
+    function patchScale(scaleOpts) {
+      if (!scaleOpts) return;
+      if (scaleOpts.ticks) scaleOpts.ticks.color = txtColor;
+      if (scaleOpts.grid)  scaleOpts.grid.color  = gridColor;
+      if (scaleOpts.title) scaleOpts.title.color  = txtColor;
+    }
+    const scales = opts.scales || {};
+    Object.values(scales).forEach(patchScale);
+
+    // Patch legend & title
+    if (opts.plugins) {
+      if (opts.plugins.legend?.labels) opts.plugins.legend.labels.color = txtColor;
+      if (opts.plugins.title) opts.plugins.title.color = txtColor;
+    }
+
+    // Patch dataset bar opacity + border
+    (cfg.data?.datasets || []).forEach(ds => {
+      if (Array.isArray(ds.backgroundColor)) {
+        ds.backgroundColor = ds.backgroundColor.map(c => {
+          const hex = c.replace('#','');
+          if (hex.length === 8) return '#' + hex.slice(0,6) + alpha;
+          if (hex.length === 6) return '#' + hex + alpha;
+          return c;
+        });
+      } else if (typeof ds.backgroundColor === 'string' && ds.backgroundColor.startsWith('#')) {
+        const hex = ds.backgroundColor.replace('#','');
+        if (hex.length === 8) ds.backgroundColor = '#' + hex.slice(0,6) + alpha;
+        else if (hex.length === 6) ds.backgroundColor = '#' + hex + alpha;
+      }
+      if (bw !== undefined && ds.type !== 'line') ds.borderWidth = bw;
+    });
+
+    // Set chart background plugin for export
+    const prevBgPlugin = chartInst.config.plugins;
+
+    chartInst.update('none'); // re-render with new styles
+
+    // Draw onto offscreen
+    ctx.drawImage(srcCanvas, 0, 0, W, H);
+
+    // Restore defaults
+    Chart.defaults.color = savedDefaults.color;
+    Chart.defaults.font.family = savedDefaults.font.family;
+    Chart.defaults.font.size   = savedDefaults.font.size;
+    Chart.defaults.borderColor = savedDefaults.borderColor;
+
+    // Restore axis colors to dark theme
+    Object.values(scales).forEach(s => {
+      if (!s) return;
+      if (s.ticks) s.ticks.color = '#8892a4';
+      if (s.grid)  s.grid.color  = 'rgba(37,43,62,.8)';
+      if (s.title) s.title.color = '#8892a4';
+    });
+    if (opts.plugins) {
+      if (opts.plugins.legend?.labels) opts.plugins.legend.labels.color = '#8892a4';
+      if (opts.plugins.title) opts.plugins.title.color = '#eef0f7';
+    }
+    // Restore dataset bg
+    chartInst.update('none');
+
+  } else {
+    // Fallback: just copy canvas
+    ctx.drawImage(srcCanvas, 0, 0, W, H);
+  }
+
+  // Download
+  const mimeType = fmt === 'jpeg' ? 'image/jpeg' : 'image/png';
+  const quality  = fmt === 'jpeg' ? 0.95 : 1.0;
+  const a = document.createElement('a');
+  a.href = offscreen.toDataURL(mimeType, quality);
+  a.download = name + '.' + fmt;
+  a.click();
+
+  // Close modal
+  const modal = document.getElementById('_exp_modal');
+  if (modal) modal.remove();
+}
+
+function wrapChart(id,title,canvasH,controls=''){
+  return`<div class="ch-wrap" style="margin-bottom:18px">
+    <div class="ch-title">${title}</div>
+    ${controls?`<div class="ch-controls">${controls}</div>`:''}
+    <canvas id="${id}" style="max-height:${canvasH||280}px"></canvas>
+    <button class="ch-export" onclick="exportChart('${id}','${title.replace(/\s+/g,'_')}')">🎨 Exportar</button>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════
+//  GETTERS
+// ══════════════════════════════════════════════════
+const qnCols = ()=>COLS.filter(c=>c.type==='cuantitativa').map(c=>c.name);
+const qlCols = ()=>COLS.filter(c=>c.type==='cualitativa').map(c=>c.name);
+const tmCols = ()=>COLS.filter(c=>c.type==='tiempo').map(c=>c.name);
+const evCols = ()=>COLS.filter(c=>c.type==='evento').map(c=>c.name);
+
+function mkOpts(arr,selVal=''){
+  return arr.map(c=>`<option value="${c}"${c===selVal?' selected':''}>${c}</option>`).join('');
+}
+
+function pBlock(p){
+  const s=p<0.05;
+  return`<div class="pval-display ${s?'sig':'ns'}">${fmtP(p)}<span>valor p ${s?'— Diferencia significativa (α=0.05)':'— No significativo (α=0.05)'}</span></div>
+  <div class="interp ${s?'sig':'ns'}">${s?'⚠️ <strong>Se rechaza H₀.</strong> La diferencia observada es estadísticamente significativa (p < 0.05).':'✓ <strong>No se rechaza H₀.</strong> No hay evidencia suficiente de diferencia significativa (p ≥ 0.05).'}</div>`;
+}
+function statRows(rows){
+  return`<div class="rb">${rows.map(([k,v])=>`<div class="rrow"><span class="rk">${k}</span><span class="rv">${v}</span></div>`).join('')}</div>`;
+}
+
+// ══════════════════════════════════════════════════
+//  PANEL: RESUMEN
+// ══════════════════════════════════════════════════
+function renderResumen(){
+  const qn=qnCols(),ql=qlCols();
+  let h=`<div class="ibar">
+    <div class="ib-i"><span>Registros: </span><strong>${DATA.length}</strong></div>
+    <div class="ib-i"><span>Cuantitativas: </span><strong>${qn.length}</strong></div>
+    <div class="ib-i"><span>Cualitativas: </span><strong>${ql.length}</strong></div>
+    <div class="ib-i"><span>Tiempo/Evento: </span><strong>${tmCols().length}/${evCols().length}</strong></div>
+  </div>`;
+
+  if(qn.length){
+    h+=`<div class="card"><div class="card-hd"><div class="ico blue">📊</div>Variables cuantitativas — resumen</div>
+    <div class="tw"><table class="dt"><thead><tr>
+      <th>Variable</th><th>N</th><th>Media ± DE</th><th>Mediana</th><th>P25 — P75</th><th>Mín</th><th>Máx</th><th>Normalidad (SW)</th>
+    </tr></thead><tbody>`;
+    qn.forEach(col=>{
+      const vals=toNum(getVals(col));
+      if(vals.length<3){h+=`<tr><td><strong>${col}</strong></td><td colspan="7" style="color:var(--tx2)">Datos insuficientes</td></tr>`;return;}
+      const sw=shapiroApprox(vals),ok=sw.p>0.05;
+      h+=`<tr><td><strong>${col}</strong></td>
+        <td>${vals.length}</td>
+        <td>${fmt(mean(vals))} ± ${fmt(sd(vals))}</td>
+        <td>${fmt(median(vals))}</td>
+        <td>${fmt(pct(vals,25))} — ${fmt(pct(vals,75))}</td>
+        <td>${fmt(Math.min(...vals))}</td>
+        <td>${fmt(Math.max(...vals))}</td>
+        <td><span class="nc ${ok?'ok':'no'}">${ok?'✓ Normal':'✗ No normal'}</span> <span style="color:var(--tx2);font-size:10px">p=${fmtP(sw.p)}</span></td>
+      </tr>`;
+    });
+    h+=`</tbody></table></div></div>`;
+  }
+
+  if(ql.length){
+    h+=`<div class="card"><div class="card-hd"><div class="ico purple">🏷️</div>Variables cualitativas — frecuencias</div>`;
+    ql.forEach(col=>{
+      const vals=getVals(col);
+      const freq={};
+      vals.forEach(v=>{const k=String(v).trim();if(k&&k!=='')freq[k]=(freq[k]||0)+1;});
+      const total=Object.values(freq).reduce((a,b)=>a+b,0);
+      const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+      const mx=sorted[0]?.[1]||1;
+      const colors=['#4f8ef7','#34d399','#a78bfa','#fb923c','#f87171','#22d3ee','#fbbf24','#ec4899'];
+      h+=`<div style="margin-bottom:22px">
+        <div style="font-size:13px;font-weight:600;color:var(--tx3);margin-bottom:10px">${col}
+          <span style="font-weight:400;color:var(--tx2);font-size:11px">${total} obs · ${sorted.length} categorías</span>
+        </div>`;
+      sorted.slice(0,12).forEach(([lbl,cnt],ci)=>{
+        const pp=(cnt/total*100).toFixed(1),bw=(cnt/mx*100).toFixed(1);
+        h+=`<div class="fbar-row">
+          <span class="fbar-lbl" title="${lbl}">${lbl}</span>
+          <div class="fbar-bg"><div class="fbar-fill" style="width:${bw}%;background:${colors[ci%8]}"></div></div>
+          <span class="fbar-pct">${cnt} (${pp}%)</span>
+        </div>`;
+      });
+      if(sorted.length>12)h+=`<div style="font-size:11px;color:var(--tx2);margin-top:3px">... y ${sorted.length-12} más</div>`;
+      h+=`</div>`;
+    });
+    h+=`</div>`;
+  }
+  if(!qn.length&&!ql.length)h=`<div class="empty"><div class="empty-ico">⚙️</div><div class="empty-t">Sin variables activas</div><div class="empty-s">Clasifica las variables en el panel izquierdo.</div></div>`;
+  document.getElementById('panelInner').innerHTML=h;
+}
+
+// ══════════════════════════════════════════════════
+//  PANEL: DESCRIPTIVA
+// ══════════════════════════════════════════════════
+function renderDescriptiva(){
+  const qn=qnCols();
+  if(!qn.length){document.getElementById('panelInner').innerHTML=`<div class="empty"><div class="empty-t">No hay variables cuantitativas</div></div>`;return;}
+  document.getElementById('panelInner').innerHTML=`
+    <div class="card">
+      <div class="card-hd"><div class="ico blue">📊</div>Análisis descriptivo detallado</div>
+      <div class="fr">
+        <div class="fg"><label>Variable</label><select id="dvar" onchange="renderDescVar()">${mkOpts(qn)}</select></div>
+        <div class="fg"><label>Agrupar por</label><select id="dgrp" onchange="renderDescVar()"><option value="">— Sin agrupar —</option>${mkOpts(qlCols())}</select></div>
+      </div>
+      <div id="desc_body"></div>
+    </div>`;
+  renderDescVar();
+}
+
+function renderDescVar(){
+  const col=document.getElementById('dvar').value;
+  const grp=document.getElementById('dgrp').value;
+  const body=document.getElementById('desc_body');
+  if(!col){body.innerHTML='';return;}
+
+  let h='';
+  if(grp){
+    const groups={};
+    DATA.forEach(r=>{const g=String(r[grp]).trim();if(g&&g!==''){if(!groups[g])groups[g]=[];groups[g].push(parseFloat(r[col]));}});
+    Object.keys(groups).forEach(k=>{groups[k]=groups[k].filter(v=>!isNaN(v));});
+    h+=`<div class="tw" style="margin-bottom:18px"><table class="dt"><thead><tr><th>Grupo</th><th>N</th><th>Media</th><th>DE</th><th>Mediana</th><th>P25</th><th>P75</th><th>Mín</th><th>Máx</th><th>Normal</th></tr></thead><tbody>`;
+    Object.entries(groups).forEach(([g,vals])=>{
+      if(vals.length<2)return;
+      const sw=shapiroApprox(vals);
+      h+=`<tr><td><strong>${g}</strong></td><td>${vals.length}</td><td>${fmt(mean(vals))}</td><td>${fmt(sd(vals))}</td><td>${fmt(median(vals))}</td><td>${fmt(pct(vals,25))}</td><td>${fmt(pct(vals,75))}</td><td>${fmt(Math.min(...vals))}</td><td>${fmt(Math.max(...vals))}</td><td><span class="nc ${sw.p>0.05?'ok':'no'}">${sw.p>0.05?'✓':'✗'}</span></td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }else{
+    const vals=toNum(getVals(col));
+    if(vals.length<3){body.innerHTML=`<div class="interp info">Datos insuficientes.</div>`;return;}
+    const sw=shapiroApprox(vals),iqr=pct(vals,75)-pct(vals,25),cv=sd(vals)/mean(vals)*100;
+    h+=`<div class="stat-grid" style="margin-bottom:18px">
+      <div class="sbox"><div class="sval">${vals.length}</div><div class="slbl">N</div></div>
+      <div class="sbox"><div class="sval">${fmt(mean(vals))}</div><div class="slbl">Media</div></div>
+      <div class="sbox"><div class="sval">${fmt(median(vals))}</div><div class="slbl">Mediana</div></div>
+      <div class="sbox"><div class="sval">${fmt(sd(vals))}</div><div class="slbl">Desv. Est.</div></div>
+      <div class="sbox"><div class="sval">${fmt(pct(vals,25))}</div><div class="slbl">P25</div></div>
+      <div class="sbox"><div class="sval">${fmt(pct(vals,75))}</div><div class="slbl">P75</div></div>
+      <div class="sbox"><div class="sval">${fmt(iqr)}</div><div class="slbl">IQR</div></div>
+      <div class="sbox"><div class="sval">${fmt(Math.min(...vals))}</div><div class="slbl">Mínimo</div></div>
+      <div class="sbox"><div class="sval">${fmt(Math.max(...vals))}</div><div class="slbl">Máximo</div></div>
+      <div class="sbox"><div class="sval">${fmt(cv)}%</div><div class="slbl">CV</div></div>
+      <div class="sbox"><div class="sval">${fmt(sw.skew)}</div><div class="slbl">Asimetría</div></div>
+      <div class="sbox"><div class="sval">${fmt(sw.kurt)}</div><div class="slbl">Curtosis exc.</div></div>
+    </div>
+    ${statRows([['Shapiro-Wilk W (aprox.)',fmt(sw.W)],['p-valor normalidad',fmtP(sw.p)],['Distribución',`<span class="nc ${sw.p>0.05?'ok':'no'}">${sw.p>0.05?'✓ Compatible con normalidad':'✗ No normalidad'}</span>`]])}`;
+  }
+
+  // HISTOGRAM
+  h+=`<div id="desc_chart_wrap" style="margin-top:20px"></div>`;
+  body.innerHTML=h;
+  renderDescChart(col,grp);
+}
+
+function renderDescChart(col,grp){
+  const wrap=document.getElementById('desc_chart_wrap');
+  // Color picker + bins control
+  wrap.innerHTML=`<div class="ch-controls" style="margin-bottom:12px">
+    <div class="ch-ctrl"><label>Tipo</label>
+      <select id="dc_type" onchange="redrawDescChart()">
+        <option value="histogram">Histograma</option>
+        <option value="boxplot_sim">Distribución (scatter)</option>
+      </select>
+    </div>
+    <div class="ch-ctrl"><label>Color</label><input type="color" id="dc_color" value="#4f8ef7" onchange="redrawDescChart()" style="min-width:60px;padding:3px;height:32px;cursor:pointer"></div>
+    <div class="ch-ctrl"><label>Bins (hist)</label><input type="number" id="dc_bins" value="15" min="5" max="50" onchange="redrawDescChart()" style="min-width:80px"></div>
+    <div class="ch-ctrl"><label>Título</label><input type="text" id="dc_title" value="${col}" onchange="redrawDescChart()" style="min-width:140px"></div>
+  </div>
+  <div class="ch-wrap"><canvas id="dc_canvas" style="max-height:300px"></canvas><button class="ch-export" onclick="exportChart('dc_canvas','${col}')">🎨 Exportar</button></div>`;
+  window._dcCol=col;window._dcGrp=grp;
+  redrawDescChart();
+}
+
+function redrawDescChart(){
+  const col=window._dcCol,grp=window._dcGrp;
+  const type=document.getElementById('dc_type').value;
+  const color=document.getElementById('dc_color').value;
+  const bins=parseInt(document.getElementById('dc_bins').value)||15;
+  const title=document.getElementById('dc_title').value;
+
+  if(grp){
+    // Multiple distributions
+    const groups={};
+    DATA.forEach(r=>{const g=String(r[grp]).trim();if(g){if(!groups[g])groups[g]=[];const v=parseFloat(r[col]);if(!isNaN(v))groups[g].push(v);}});
+    const keys=Object.keys(groups);
+    const allVals=Object.values(groups).flat();
+    const mn=Math.min(...allVals),mx=Math.max(...allVals),w=(mx-mn)/bins;
+    const labels=[];for(let b=0;b<bins;b++)labels.push((mn+b*w+w/2).toFixed(1));
+    mkChart('dc_canvas',{type:'bar',data:{labels,datasets:keys.map((k,i)=>{
+      const vals=groups[k],counts=new Array(bins).fill(0);
+      vals.forEach(v=>{const b=Math.min(bins-1,Math.floor((v-mn)/w));counts[b]++;});
+      return{label:k,data:counts,backgroundColor:PAL[i%10]+'88',borderColor:PAL[i%10],borderWidth:1,borderRadius:3};
+    })},options:{...CHART_DEFAULTS,plugins:{...CHART_DEFAULTS.plugins,title:{display:!!title,text:title,color:'var(--tx)',font:{family:'Outfit',size:13,weight:'600'}}}}});
+  }else{
+    const vals=toNum(getVals(col));
+    const mn=Math.min(...vals),mx=Math.max(...vals),w=(mx-mn)/bins;
+    const counts=new Array(bins).fill(0),labels=[];
+    for(let b=0;b<bins;b++)labels.push((mn+b*w+w/2).toFixed(1));
+    vals.forEach(v=>{const b=Math.min(bins-1,Math.floor((v-mn)/w));counts[b]++;});
+    if(type==='histogram'){
+      mkChart('dc_canvas',{type:'bar',data:{labels,datasets:[{label:col,data:counts,backgroundColor:color+'99',borderColor:color,borderWidth:1,borderRadius:4}]},
+        options:{...CHART_DEFAULTS,plugins:{...CHART_DEFAULTS.plugins,legend:{display:false},title:{display:!!title,text:title,color:'var(--tx)',font:{family:'Outfit',size:13,weight:'600'}}}}});
+    }else{
+      mkChart('dc_canvas',{type:'scatter',data:{datasets:[{label:col,data:vals.map((v,i)=>({x:i,y:v})),backgroundColor:color+'99',borderColor:color,pointRadius:3}]},
+        options:{...CHART_DEFAULTS,plugins:{...CHART_DEFAULTS.plugins,legend:{display:false},title:{display:!!title,text:title,color:'var(--tx)',font:{family:'Outfit',size:13,weight:'600'}}}}});
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  PANEL: GRÁFICOS
+// ══════════════════════════════════════════════════
+function renderGraficos(){
+  const qn=qnCols(),ql=qlCols();
+  document.getElementById('panelInner').innerHTML=`
+    <div class="card">
+      <div class="card-hd"><div class="ico cyan">📈</div>Constructor de gráficos</div>
+      <div class="fr">
+        <div class="fg"><label>Tipo de gráfico</label>
+          <select id="g_type" onchange="updateGraficoForm()">
+            <option value="hist">Histograma</option>
+            <option value="bar_cat">Barras (categórica)</option>
+            <option value="pie">Tarta / Pastel</option>
+            <option value="donut">Donut</option>
+            <option value="scatter">Dispersión (X vs Y)</option>
+            <option value="box_sim">Box-plot simulado</option>
+            <option value="line_grp">Línea por grupos</option>
+          </select>
+        </div>
+        <div class="fg"><label>Variable principal</label><select id="g_var">${mkOpts([...qn,...ql])}</select></div>
+        <div id="g_extra_wrap" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+      </div>
+      <!-- Personalización -->
+      <div style="background:var(--s3);border:1px solid var(--br);border-radius:8px;padding:14px;margin-bottom:18px;">
+        <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">🎨 Personalización</div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          <div class="ch-ctrl"><label>Título</label><input type="text" id="g_title" placeholder="Título del gráfico" style="min-width:200px"></div>
+          <div class="ch-ctrl"><label>Eje X</label><input type="text" id="g_xlabel" placeholder="Etiqueta X" style="min-width:130px"></div>
+          <div class="ch-ctrl"><label>Eje Y</label><input type="text" id="g_ylabel" placeholder="Etiqueta Y" style="min-width:130px"></div>
+          <div class="ch-ctrl"><label>Color 1</label><input type="color" id="g_c1" value="#4f8ef7" style="min-width:60px;padding:3px;height:32px;cursor:pointer"></div>
+          <div class="ch-ctrl"><label>Color 2</label><input type="color" id="g_c2" value="#34d399" style="min-width:60px;padding:3px;height:32px;cursor:pointer"></div>
+          <div class="ch-ctrl"><label>Bins (hist)</label><input type="number" id="g_bins" value="15" min="3" max="60" style="min-width:80px"></div>
+          <div class="ch-ctrl"><label>Alto (px)</label><input type="number" id="g_height" value="320" min="150" max="600" style="min-width:90px" onchange="document.getElementById('g_canvas').style.maxHeight=this.value+'px'"></div>
+        </div>
+      </div>
+      <button class="btn" onclick="buildGrafico()">Generar gráfico</button>
+      <div id="g_result" style="margin-top:20px"></div>
+    </div>`;
+  updateGraficoForm();
+}
+
+function updateGraficoForm(){
+  const type=document.getElementById('g_type').value;
+  const qn=qnCols(),ql=qlCols();
+  let extra='';
+  if(type==='scatter'||type==='line_grp'){
+    extra+=`<div class="fg"><label>Variable Y</label><select id="g_var2">${mkOpts(qn)}</select></div>`;
+  }
+  if(type==='hist'||type==='scatter'||type==='box_sim'||type==='line_grp'){
+    extra+=`<div class="fg"><label>Agrupar por</label><select id="g_grp"><option value="">— Sin agrupar —</option>${mkOpts(ql)}</select></div>`;
+  }
+  document.getElementById('g_extra_wrap').innerHTML=extra;
+}
+
+function buildGrafico(){
+  const type=document.getElementById('g_type').value;
+  const varName=document.getElementById('g_var').value;
+  const title=document.getElementById('g_title').value||varName;
+  const xlabel=document.getElementById('g_xlabel').value;
+  const ylabel=document.getElementById('g_ylabel').value;
+  const c1=document.getElementById('g_c1').value;
+  const c2=document.getElementById('g_c2').value;
+  const bins=parseInt(document.getElementById('g_bins').value)||15;
+  const height=parseInt(document.getElementById('g_height').value)||320;
+  const grpEl=document.getElementById('g_grp');
+  const var2El=document.getElementById('g_var2');
+  const grp=grpEl?grpEl.value:'';
+  const var2=var2El?var2El.value:'';
+
+  const wrap=document.getElementById('g_result');
+  wrap.innerHTML=`<div class="ch-wrap"><canvas id="g_canvas" style="max-height:${height}px"></canvas><button class="ch-export" onclick="exportChart('g_canvas','${title.replace(/'/g,"\\'")}')">🎨 Exportar</button></div>`;
+
+  const pluginsBase={
+    legend:{labels:{color:'#8892a4',font:{family:'Outfit',size:12}}},
+    title:{display:!!title,text:title,color:'var(--tx)',font:{family:'Outfit',size:14,weight:'700'}},
+  };
+  const scalesBase={
+    x:{title:{display:!!xlabel,text:xlabel,color:'#8892a4'},ticks:{color:'#8892a4',font:{family:'Outfit',size:11}},grid:{color:'rgba(37,43,62,.8)'}},
+    y:{title:{display:!!ylabel,text:ylabel,color:'#8892a4'},ticks:{color:'#8892a4',font:{family:'Outfit',size:11}},grid:{color:'rgba(37,43,62,.8)'}}
+  };
+
+  setTimeout(()=>{
+    if(type==='hist'){
+      const groups=grp?{}:null;
+      if(grp){
+        DATA.forEach(r=>{const g=String(r[grp]).trim();if(g){if(!groups[g])groups[g]=[];const v=parseFloat(r[varName]);if(!isNaN(v))groups[g].push(v);}});
+      }
+      const allVals=grp?Object.values(groups).flat():toNum(getVals(varName));
+      const mn=Math.min(...allVals),mx=Math.max(...allVals),w=(mx-mn)/bins;
+      const lbls=[];for(let b=0;b<bins;b++)lbls.push((mn+b*w+w/2).toFixed(1));
+      const datasets=grp?Object.entries(groups).map(([k,vals],i)=>{
+        const counts=new Array(bins).fill(0);
+        vals.forEach(v=>{const b=Math.min(bins-1,Math.floor((v-mn)/w));counts[b]++;});
+        return{label:k,data:counts,backgroundColor:PAL[i%10]+'99',borderColor:PAL[i%10],borderWidth:1,borderRadius:4};
+      }):[{label:varName,data:allVals.reduce((acc,v)=>{const b=Math.min(bins-1,Math.floor((v-mn)/w));acc[b]++;return acc;},new Array(bins).fill(0)),backgroundColor:c1+'99',borderColor:c1,borderWidth:1,borderRadius:4}];
+      mkChart('g_canvas',{type:'bar',data:{labels:lbls,datasets},options:{plugins:pluginsBase,scales:scalesBase}});
+    }
+    else if(type==='bar_cat'){
+      const freq={};
+      getVals(varName).forEach(v=>{const k=String(v).trim();if(k)freq[k]=(freq[k]||0)+1;});
+      const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,20);
+      mkChart('g_canvas',{type:'bar',data:{labels:sorted.map(e=>e[0]),datasets:[{label:'Frecuencia',data:sorted.map(e=>e[1]),backgroundColor:sorted.map((_,i)=>PAL[i%10]+'cc'),borderColor:sorted.map((_,i)=>PAL[i%10]),borderWidth:1,borderRadius:5}]},options:{indexAxis:'y',plugins:pluginsBase,scales:scalesBase}});
+    }
+    else if(type==='pie'||type==='donut'){
+      const freq={};
+      getVals(varName).forEach(v=>{const k=String(v).trim();if(k)freq[k]=(freq[k]||0)+1;});
+      const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      mkChart('g_canvas',{type:'doughnut',data:{labels:sorted.map(e=>e[0]),datasets:[{data:sorted.map(e=>e[1]),backgroundColor:PAL.slice(0,sorted.length).map(c=>c+'cc'),borderColor:PAL.slice(0,sorted.length),borderWidth:2,holeRadius:type==='donut'?50:0}]},options:{cutout:type==='donut'?'55%':'0%',plugins:pluginsBase}});
+    }
+    else if(type==='scatter'){
+      const datasets=grp?(() => {
+        const groups={};
+        DATA.forEach(r=>{const g=String(r[grp]).trim();if(g){if(!groups[g])groups[g]=[];const x=parseFloat(r[varName]),y=parseFloat(r[var2]);if(!isNaN(x)&&!isNaN(y))groups[g].push({x,y});}});
+        return Object.entries(groups).map(([k,pts],i)=>({label:k,data:pts,backgroundColor:PAL[i%10]+'99',borderColor:PAL[i%10],pointRadius:4}));
+      })():[{label:`${varName} vs ${var2}`,data:DATA.map(r=>({x:parseFloat(r[varName]),y:parseFloat(r[var2])})).filter(p=>!isNaN(p.x)&&!isNaN(p.y)),backgroundColor:c1+'99',borderColor:c1,pointRadius:4}];
+      mkChart('g_canvas',{type:'scatter',data:{datasets},options:{plugins:pluginsBase,scales:scalesBase}});
+    }
+    else if(type==='box_sim'){
+      const allVals=toNum(getVals(varName));
+      mkChart('g_canvas',{type:'scatter',data:{datasets:[{label:varName,data:allVals.map((v,i)=>({x:1+Math.random()*.4-.2,y:v})),backgroundColor:c1+'99',borderColor:c1,pointRadius:5,pointHoverRadius:7}]},options:{plugins:pluginsBase,scales:{...scalesBase,x:{...scalesBase.x,min:0.5,max:1.5,ticks:{display:false}}}}});
+    }
+    else if(type==='line_grp'){
+      if(grp){
+        const groups={};
+        DATA.forEach(r=>{const g=String(r[grp]).trim();if(g){if(!groups[g])groups[g]=[];const x=parseFloat(r[varName]),y=parseFloat(r[var2]);if(!isNaN(x)&&!isNaN(y))groups[g].push({x,y});}});
+        const datasets=Object.entries(groups).map(([k,pts],i)=>({label:k,data:pts.sort((a,b)=>a.x-b.x),borderColor:PAL[i%10],backgroundColor:PAL[i%10]+'33',fill:false,tension:.3,pointRadius:3}));
+        mkChart('g_canvas',{type:'line',data:{datasets},options:{plugins:pluginsBase,scales:scalesBase}});
+      }else{
+        const pts=DATA.map(r=>({x:parseFloat(r[varName]),y:parseFloat(r[var2])})).filter(p=>!isNaN(p.x)&&!isNaN(p.y)).sort((a,b)=>a.x-b.x);
+        mkChart('g_canvas',{type:'line',data:{datasets:[{label:`${varName}`,data:pts,borderColor:c1,backgroundColor:c1+'33',fill:true,tension:.3,pointRadius:2}]},options:{plugins:pluginsBase,scales:scalesBase}});
+      }
+    }
+  },50);
+}
+
+// ══════════════════════════════════════════════════
+//  PANEL: TESTS
+// ══════════════════════════════════════════════════
+let _activeTest='ttest';
+function renderTests(){
+  const qn=qnCols(),ql=qlCols();
+  const qno=mkOpts(qn),qlo=mkOpts(ql);
+  document.getElementById('panelInner').innerHTML=`
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">
+      ${[['ttest','T de Student','2 grupos indep. paramétrico'],
+         ['mwu','Mann-Whitney U','2 grupos no paramétrico'],
+         ['paired','T pareada','Medidas repetidas paramétrico'],
+         ['wilcox','Wilcoxon signed','Medidas repetidas no param.'],
+         ['anova','ANOVA 1 factor','≥3 grupos paramétrico'],
+         ['kruskal','Kruskal-Wallis','≥3 grupos no paramétrico'],
+         ['chi2','Chi-cuadrado','2 vars categóricas'],
+         ['fisher','Fisher exacto','Tablas 2×2']]
+        .map(([id,name,desc])=>`<div class="tbtn${id===_activeTest?' on':''}" onclick="selTest('${id}',this)"><div style="font-weight:600;font-size:12px">${name}</div><div style="color:var(--tx2);font-size:10px;margin-top:2px">${desc}</div></div>`)
+        .join('')}
+    </div>
+    <div id="test_form"></div>`;
+  renderTestForm(_activeTest);
+}
+
+function selTest(name,el){
+  _activeTest=name;
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderTestForm(name);
+}
+
+function renderTestForm(name){
+  const qn=qnCols(),ql=qlCols();
+  const qno=mkOpts(qn),qlo=mkOpts(ql);
+  const forms={
+    ttest:`<div class="card"><div class="card-hd"><div class="ico blue">🔵</div>T de Student — 2 muestras independientes</div>
+      <div class="fr">
+        <div class="fg"><label>Variable continua</label><select id="tt_var">${qno}</select></div>
+        <div class="fg"><label>Grupo (2 categorías)</label><select id="tt_grp">${qlo}</select></div>
+        <button class="btn" onclick="runTtest()">Ejecutar</button>
+      </div><div id="tt_res"></div><div id="tt_chart" style="margin-top:18px"></div></div>`,
+
+    mwu:`<div class="card"><div class="card-hd"><div class="ico green">🟢</div>Mann-Whitney U — no paramétrico</div>
+      <div class="fr">
+        <div class="fg"><label>Variable continua</label><select id="mwu_var">${qno}</select></div>
+        <div class="fg"><label>Grupo (2 categorías)</label><select id="mwu_grp">${qlo}</select></div>
+        <button class="btn" onclick="runMWU()">Ejecutar</button>
+      </div><div id="mwu_res"></div><div id="mwu_chart" style="margin-top:18px"></div></div>`,
+
+    paired:`<div class="card"><div class="card-hd"><div class="ico orange">🔶</div>T pareada — medidas repetidas</div>
+      <div class="fr">
+        <div class="fg"><label>Variable pre/tiempo 1</label><select id="pt_v1">${qno}</select></div>
+        <div class="fg"><label>Variable post/tiempo 2</label><select id="pt_v2">${qno}</select></div>
+        <button class="btn" onclick="runPaired()">Ejecutar</button>
+      </div><div id="pt_res"></div></div>`,
+
+    wilcox:`<div class="card"><div class="card-hd"><div class="ico cyan">🔷</div>Wilcoxon signed-rank — no paramétrico pareado</div>
+      <div class="fr">
+        <div class="fg"><label>Variable pre/tiempo 1</label><select id="wx_v1">${qno}</select></div>
+        <div class="fg"><label>Variable post/tiempo 2</label><select id="wx_v2">${qno}</select></div>
+        <button class="btn" onclick="runWilcoxon()">Ejecutar</button>
+      </div><div id="wx_res"></div></div>`,
+
+    anova:`<div class="card"><div class="card-hd"><div class="ico orange">🟡</div>ANOVA de un factor</div>
+      <div class="fr">
+        <div class="fg"><label>Variable dependiente</label><select id="av_var">${qno}</select></div>
+        <div class="fg"><label>Factor (categórico)</label><select id="av_grp">${qlo}</select></div>
+        <button class="btn" onclick="runAnova()">Ejecutar</button>
+      </div><div id="av_res"></div><div id="av_chart" style="margin-top:18px"></div></div>`,
+
+    kruskal:`<div class="card"><div class="card-hd"><div class="ico red">🔴</div>Kruskal-Wallis — no paramétrico ≥3 grupos</div>
+      <div class="fr">
+        <div class="fg"><label>Variable continua</label><select id="kw_var">${qno}</select></div>
+        <div class="fg"><label>Factor (categórico)</label><select id="kw_grp">${qlo}</select></div>
+        <button class="btn" onclick="runKruskal()">Ejecutar</button>
+      </div><div id="kw_res"></div><div id="kw_chart" style="margin-top:18px"></div></div>`,
+
+    chi2:`<div class="card"><div class="card-hd"><div class="ico purple">🟣</div>Chi-cuadrado de independencia</div>
+      <div class="fr">
+        <div class="fg"><label>Variable 1</label><select id="c2_v1">${qlo}</select></div>
+        <div class="fg"><label>Variable 2</label><select id="c2_v2">${qlo}</select></div>
+        <button class="btn" onclick="runChi2()">Ejecutar</button>
+      </div><div id="c2_res"></div><div id="c2_chart" style="margin-top:18px"></div></div>`,
+
+    fisher:`<div class="card"><div class="card-hd"><div class="ico red">🔵</div>Fisher exacto — tablas 2×2</div>
+      <div class="fr">
+        <div class="fg"><label>Variable 1 (binaria)</label><select id="fe_v1">${qlo}</select></div>
+        <div class="fg"><label>Variable 2 (binaria)</label><select id="fe_v2">${qlo}</select></div>
+        <button class="btn" onclick="runFisher()">Ejecutar</button>
+      </div><div id="fe_res"></div></div>`,
+  };
+  document.getElementById('test_form').innerHTML=forms[name]||'';
+}
+
+function getGroupVals(varCol,grpCol){
+  const groups={};
+  DATA.forEach(r=>{const g=String(r[grpCol]).trim(),v=parseFloat(r[varCol]);if(g&&!isNaN(v)){if(!groups[g])groups[g]=[];groups[g].push(v);}});
+  return groups;
+}
+
+function renderGroupChart(containerId,groups,varName){
+  const keys=Object.keys(groups);
+  document.getElementById(containerId).innerHTML=`<div class="ch-controls" style="margin-bottom:10px">
+    <div class="ch-ctrl"><label>Tipo de gráfico</label>
+      <select id="${containerId}_type">
+        <option value="scatter">Distribución (puntos)</option>
+        <option value="bar_mean">Barras (medias)</option>
+      </select>
+    </div>
+    <button class="btn sec" style="padding:5px 12px;font-size:11px" onclick="redrawGroupChart('${containerId}')">Actualizar</button>
+    <button class="ch-export" onclick="exportChart('${containerId}_canvas','${varName}')" style="position:static;margin-top:auto">🎨 Exportar</button>
+  </div>
+  <div class="ch-wrap"><canvas id="${containerId}_canvas" style="max-height:280px"></canvas></div>`;
+  window['_gc_'+containerId]={groups,varName};
+  redrawGroupChart(containerId);
+}
+
+function redrawGroupChart(cid){
+  const {groups,varName}=window['_gc_'+cid]||{};
+  if(!groups)return;
+  const keys=Object.keys(groups);
+  const typeEl=document.getElementById(`${cid}_type`);
+  const type=typeEl?typeEl.value:'scatter';
+  if(type==='scatter'){
+    const datasets=keys.map((k,i)=>({label:k,data:groups[k].map((v,j)=>({x:i+1+Math.random()*.3-.15,y:v})),backgroundColor:PAL[i%10]+'99',borderColor:PAL[i%10],pointRadius:5}));
+    mkChart(`${cid}_canvas`,{type:'scatter',data:{datasets},options:{...CHART_DEFAULTS,plugins:{...CHART_DEFAULTS.plugins},scales:{...CHART_DEFAULTS.scales,x:{...CHART_DEFAULTS.scales.x,min:.5,max:keys.length+.5,ticks:{callback:(v)=>keys[Math.round(v)-1]||v}}}}});
+  }else{
+    const means=keys.map(k=>mean(groups[k])),errs=keys.map(k=>sd(groups[k])/Math.sqrt(groups[k].length)*1.96);
+    mkChart(`${cid}_canvas`,{type:'bar',data:{labels:keys,datasets:[{label:'Media ± IC95%',data:means,backgroundColor:keys.map((_,i)=>PAL[i%10]+'99'),borderColor:keys.map((_,i)=>PAL[i%10]),borderWidth:2,borderRadius:5,errorBars:errs}]},options:{...CHART_DEFAULTS}});
+  }
+}
+
+function runTtest(){
+  const vc=document.getElementById('tt_var').value,gc=document.getElementById('tt_grp').value;
+  const gs=getGroupVals(vc,gc),ks=Object.keys(gs);
+  if(ks.length!==2){document.getElementById('tt_res').innerHTML=`<div class="interp warn">⚠️ Se necesitan exactamente 2 grupos. Encontrados: ${ks.join(', ')||'ninguno'}</div>`;return;}
+  const [a,b]=[gs[ks[0]],gs[ks[1]]],r=tTest(a,b);
+  document.getElementById('tt_res').innerHTML=statRows([[`Grupo "${ks[0]}"`,`n=${a.length} · Media=${fmt(r.ma)} · DE=${fmt(r.sa)}`],[`Grupo "${ks[1]}"`,`n=${b.length} · Media=${fmt(r.mb)} · DE=${fmt(r.sb)}`],['Diferencia de medias',fmt(r.ma-r.mb)],['t',fmt(r.t)],['df',r.df]])+pBlock(r.p);
+  renderGroupChart('tt_chart',gs,vc);
+}
+function runMWU(){
+  const vc=document.getElementById('mwu_var').value,gc=document.getElementById('mwu_grp').value;
+  const gs=getGroupVals(vc,gc),ks=Object.keys(gs);
+  if(ks.length!==2){document.getElementById('mwu_res').innerHTML=`<div class="interp warn">⚠️ Se necesitan 2 grupos.</div>`;return;}
+  const [a,b]=[gs[ks[0]],gs[ks[1]]],r=mannWhitney(a,b);
+  document.getElementById('mwu_res').innerHTML=statRows([[`Grupo "${ks[0]}"`,`n=${a.length} · Mediana=${fmt(median(a))} · IQR=${fmt(pct(a,25))}–${fmt(pct(a,75))}`],[`Grupo "${ks[1]}"`,`n=${b.length} · Mediana=${fmt(median(b))} · IQR=${fmt(pct(b,25))}–${fmt(pct(b,75))}`],['U',fmt(r.U)],['z',fmt(r.z)]])+pBlock(r.p);
+  renderGroupChart('mwu_chart',gs,vc);
+}
+function runPaired(){
+  const v1=document.getElementById('pt_v1').value,v2=document.getElementById('pt_v2').value;
+  const a=toNum(DATA.map(r=>r[v1])),b=toNum(DATA.map(r=>r[v2]));
+  const n=Math.min(a.length,b.length),r=pairedTTest(a.slice(0,n),b.slice(0,n));
+  document.getElementById('pt_res').innerHTML=statRows([[v1,`Media=${fmt(mean(a))}`],[v2,`Media=${fmt(mean(b))}`],['Diferencia media',fmt(r.md)],['DE de las dif.',fmt(r.sdd)],['t',fmt(r.t)],['df',r.df]])+pBlock(r.p);
+}
+function runWilcoxon(){
+  const v1=document.getElementById('wx_v1').value,v2=document.getElementById('wx_v2').value;
+  const a=toNum(DATA.map(r=>r[v1])),b=toNum(DATA.map(r=>r[v2]));
+  const n=Math.min(a.length,b.length),r=wilcoxonSigned(a.slice(0,n),b.slice(0,n));
+  document.getElementById('wx_res').innerHTML=statRows([['W',fmt(r.W)],['z',fmt(r.z)],['N (diferencias ≠0)',n]])+pBlock(r.p);
+}
+function runAnova(){
+  const vc=document.getElementById('av_var').value,gc=document.getElementById('av_grp').value;
+  const gs=getGroupVals(vc,gc),ks=Object.keys(gs);
+  if(ks.length<3){document.getElementById('av_res').innerHTML=`<div class="interp warn">⚠️ ANOVA requiere ≥3 grupos. Encontrados: ${ks.join(', ')}. Use T-test para 2 grupos.</div>`;return;}
+  const r=oneAnova(ks.map(k=>gs[k]));
+  const groupRows=ks.map(k=>[`Grupo "${k}"`,`n=${gs[k].length} · Media=${fmt(mean(gs[k]))} · DE=${fmt(sd(gs[k]))}`]);
+  document.getElementById('av_res').innerHTML=statRows([...groupRows,['F',fmt(r.F)],['df entre/dentro',`${r.df1} / ${r.df2}`],['η² (effect size)',fmt(r.eta2)]])+pBlock(r.p);
+  renderGroupChart('av_chart',gs,vc);
+}
+function runKruskal(){
+  const vc=document.getElementById('kw_var').value,gc=document.getElementById('kw_grp').value;
+  const gs=getGroupVals(vc,gc),ks=Object.keys(gs);
+  if(ks.length<3){document.getElementById('kw_res').innerHTML=`<div class="interp warn">⚠️ Kruskal-Wallis requiere ≥3 grupos.</div>`;return;}
+  const r=kruskalWallis(ks.map(k=>gs[k]));
+  const groupRows=ks.map(k=>[`Grupo "${k}"`,`n=${gs[k].length} · Mediana=${fmt(median(gs[k]))}`]);
+  document.getElementById('kw_res').innerHTML=statRows([...groupRows,['H',fmt(r.H)],['df',r.df]])+pBlock(r.p);
+  renderGroupChart('kw_chart',gs,vc);
+}
+function runChi2(){
+  const v1=document.getElementById('c2_v1').value,v2=document.getElementById('c2_v2').value;
+  const c1=[...new Set(DATA.map(r=>String(r[v1]).trim()).filter(v=>v))];
+  const c2=[...new Set(DATA.map(r=>String(r[v2]).trim()).filter(v=>v))];
+  const cont=c1.map(a=>c2.map(b=>DATA.filter(r=>String(r[v1]).trim()===a&&String(r[v2]).trim()===b).length));
+  const r=chiSq(cont);
+  let tbl=`<div class="tw" style="margin-bottom:14px"><table class="dt"><thead><tr><th>${v1}\\${v2}</th>${c2.map(c=>`<th>${c.length>14?c.slice(0,14)+'…':c}</th>`).join('')}<th>Total</th></tr></thead><tbody>`;
+  c1.forEach((a,i)=>{const tot=cont[i].reduce((s,v)=>s+v,0);tbl+=`<tr><td><strong>${a}</strong></td>${cont[i].map(v=>`<td>${v}</td>`).join('')}<td><strong>${tot}</strong></td></tr>`;});
+  tbl+=`</tbody></table></div>`;
+  document.getElementById('c2_res').innerHTML=tbl+statRows([['χ²',fmt(r.chi2)],['df',r.df],['φ (Phi)',fmt(r.phi)],["V de Cramér",fmt(r.cramers)],['N',r.N]])+pBlock(r.p);
+  // Mosaic-style chart
+  const wrap=document.getElementById('c2_chart');
+  wrap.innerHTML=`<div class="ch-wrap"><canvas id="c2_canvas" style="max-height:260px"></canvas><button class="ch-export" onclick="exportChart('c2_canvas','chi2')">🎨 Exportar</button></div>`;
+  setTimeout(()=>{
+    const total=cont.flat().reduce((a,b)=>a+b,0);
+    mkChart('c2_canvas',{type:'bar',data:{labels:c1,datasets:c2.map((cat,i)=>({label:cat,data:c1.map((_,ri)=>cont[ri][i]),backgroundColor:PAL[i%10]+'cc',borderColor:PAL[i%10],borderWidth:1,borderRadius:3}))},options:{...CHART_DEFAULTS,scales:{...CHART_DEFAULTS.scales,x:{stacked:true,...CHART_DEFAULTS.scales.x},y:{stacked:true,...CHART_DEFAULTS.scales.y}}}});
+  },50);
+}
+function runFisher(){
+  const v1=document.getElementById('fe_v1').value,v2=document.getElementById('fe_v2').value;
+  const c1=[...new Set(DATA.map(r=>String(r[v1]).trim()).filter(v=>v))].slice(0,2);
+  const c2=[...new Set(DATA.map(r=>String(r[v2]).trim()).filter(v=>v))].slice(0,2);
+  if(c1.length<2||c2.length<2){document.getElementById('fe_res').innerHTML=`<div class="interp warn">⚠️ Fisher requiere variables binarias (exactamente 2 categorías cada una).</div>`;return;}
+  const a=DATA.filter(r=>String(r[v1]).trim()===c1[0]&&String(r[v2]).trim()===c2[0]).length;
+  const b=DATA.filter(r=>String(r[v1]).trim()===c1[0]&&String(r[v2]).trim()===c2[1]).length;
+  const c=DATA.filter(r=>String(r[v1]).trim()===c1[1]&&String(r[v2]).trim()===c2[0]).length;
+  const d=DATA.filter(r=>String(r[v1]).trim()===c1[1]&&String(r[v2]).trim()===c2[1]).length;
+  const r=fisherExact(a,b,c,d);
+  let tbl=`<div class="tw" style="margin-bottom:14px"><table class="dt"><thead><tr><th></th><th>${c2[0]}</th><th>${c2[1]}</th><th>Total</th></tr></thead><tbody>
+    <tr><td><strong>${c1[0]}</strong></td><td>${a}</td><td>${b}</td><td>${a+b}</td></tr>
+    <tr><td><strong>${c1[1]}</strong></td><td>${c}</td><td>${d}</td><td>${c+d}</td></tr>
+    <tr><td><strong>Total</strong></td><td>${a+c}</td><td>${b+d}</td><td>${a+b+c+d}</td></tr>
+  </tbody></table></div>`;
+  document.getElementById('fe_res').innerHTML=tbl+statRows([['Odds Ratio',fmt(r.OR)],['IC 95% OR',`${fmt(r.CI_lo)} — ${fmt(r.CI_hi)}`],['χ² (aprox)',fmt(r.chi2)]])+pBlock(r.p);
+}
+
+// ══════════════════════════════════════════════════
+//  PANEL: CORRELACIÓN
+// ══════════════════════════════════════════════════
+function renderCorrelacion(){
+  const qn=qnCols();
+  if(qn.length<2){document.getElementById('panelInner').innerHTML=`<div class="empty"><div class="empty-t">Se necesitan ≥2 variables cuantitativas</div></div>`;return;}
+  document.getElementById('panelInner').innerHTML=`
+    <div class="card">
+      <div class="card-hd"><div class="ico blue">🔗</div>Correlación entre dos variables</div>
+      <div class="fr">
+        <div class="fg"><label>Variable X</label><select id="cx">${mkOpts(qn)}</select></div>
+        <div class="fg"><label>Variable Y</label><select id="cy">${mkOpts(qn,qn[1]||qn[0])}</select></div>
+        <div class="fg"><label>Método</label><select id="cmethod"><option value="pearson">Pearson (paramétrico)</option><option value="spearman">Spearman (no param.)</option></select></div>
+        <div class="fg"><label>Color</label><input type="color" id="cor_c" value="#4f8ef7" style="min-width:60px;padding:3px;height:36px;cursor:pointer"></div>
+        <button class="btn" onclick="runCor()">Calcular</button>
+      </div>
+      <div id="cor_res"></div>
+      <div style="margin-top:18px">
+        <div class="ch-wrap"><canvas id="cor_scatter" style="max-height:300px"></canvas><button class="ch-export" onclick="exportChart('cor_scatter','correlacion')">🎨 Exportar</button></div>
+      </div>
+    </div>
+    ${qn.length<=12?`<div class="card"><div class="card-hd"><div class="ico green">🔢</div>Matriz de correlación de Pearson</div><div class="tw"><table class="cm-table"><thead><tr><th></th>${qn.map(c=>`<th title="${c}">${c.length>10?c.slice(0,10)+'…':c}</th>`).join('')}</tr></thead><tbody>${qn.map(c1=>`<tr><th style="text-align:left;font-size:10px;white-space:nowrap">${c1.length>12?c1.slice(0,12)+'…':c1}</th>${qn.map(c2=>{const x=toNum(getVals(c1)),y=toNum(getVals(c2)),n=Math.min(x.length,y.length),res=pearsonR(x.slice(0,n),y.slice(0,n)),r=res.r,a=Math.abs(r);const bg=r>=0?`rgba(79,142,247,${a*.7})`:`rgba(248,113,113,${a*.7})`;return`<td style="background:${bg};color:${a>.4?'#fff':'var(--tx3)'}">${c1===c2?'1.000':fmt(r).slice(0,5)}${c1!==c2&&res.p<0.05?'<sup style="color:#fbbf24">*</sup>':''}</td>`;}).join('')}</tr>`).join('')}</tbody></table></div><div class="interp info" style="margin-top:10px">* p &lt; 0.05 · Azul: positivo · Rojo: negativo</div></div>`:''}`;
+}
+
+function runCor(){
+  const xn=document.getElementById('cx').value,yn=document.getElementById('cy').value;
+  const meth=document.getElementById('cmethod').value;
+  const color=document.getElementById('cor_c').value;
+  const xv=toNum(getVals(xn)),yv=toNum(getVals(yn)),n=Math.min(xv.length,yv.length);
+  const res=meth==='pearson'?pearsonR(xv.slice(0,n),yv.slice(0,n)):spearmanR(xv.slice(0,n),yv.slice(0,n));
+  const str=Math.abs(res.r)<0.2?'Muy débil':Math.abs(res.r)<0.4?'Débil':Math.abs(res.r)<0.6?'Moderada':Math.abs(res.r)<0.8?'Fuerte':'Muy fuerte';
+  document.getElementById('cor_res').innerHTML=statRows([['r (coef. correlación)',fmt(res.r)],['R²',fmt(res.r**2)],['t',fmt(res.t)],['n',res.n],['Fuerza',str]])+pBlock(res.p);
+  const pts=xv.slice(0,n).map((x,i)=>({x,y:yv[i]}));
+  // Regression line
+  const mx2=mean(xv.slice(0,n)),my2=mean(yv.slice(0,n));
+  const slope=xv.slice(0,n).reduce((a,x,i)=>a+(x-mx2)*(yv[i]-my2),0)/xv.slice(0,n).reduce((a,x)=>a+(x-mx2)**2,0);
+  const intcp=my2-slope*mx2;
+  const xMin=Math.min(...xv.slice(0,n)),xMax=Math.max(...xv.slice(0,n));
+  mkChart('cor_scatter',{type:'scatter',data:{datasets:[
+    {label:`${xn} vs ${yn}`,data:pts,backgroundColor:color+'88',borderColor:color,pointRadius:5,pointHoverRadius:7},
+    {label:'Recta regresión',data:[{x:xMin,y:slope*xMin+intcp},{x:xMax,y:slope*xMax+intcp}],type:'line',borderColor:'#fbbf24',borderWidth:2,pointRadius:0,borderDash:[5,5]}
+  ]},options:{...CHART_DEFAULTS,plugins:{...CHART_DEFAULTS.plugins}}});
+}
+
+// ══════════════════════════════════════════════════
+//  PANEL: SUPERVIVENCIA
+// ══════════════════════════════════════════════════
+function renderSupervivencia(){
+  const tm=tmCols(),ev=evCols(),ql=qlCols();
+  document.getElementById('panelInner').innerHTML=`
+    <div class="card">
+      <div class="card-hd"><div class="ico orange">🩺</div>Análisis de supervivencia — Kaplan-Meier</div>
+      <div class="interp info" style="margin-bottom:18px">Clasifica la variable de tiempo como <strong>Tiempo</strong> y la variable del evento (0/1) como <strong>Evento</strong> en el panel izquierdo.</div>
+      <div class="fr">
+        <div class="fg"><label>Variable tiempo</label><select id="km_time">${mkOpts([...tm,...qnCols()])}</select></div>
+        <div class="fg"><label>Variable evento (0=censurado, 1=evento)</label><select id="km_event">${mkOpts([...ev,...qlCols()])}</select></div>
+        <div class="fg"><label>Estratificar por</label><select id="km_strat"><option value="">— Toda la muestra —</option>${mkOpts(ql)}</select></div>
+      </div>
+      <div class="fr">
+        <div class="ch-ctrl"><label>Color curva 1</label><input type="color" id="km_c1" value="#4f8ef7" style="min-width:60px;padding:3px;height:32px;cursor:pointer"></div>
+        <div class="ch-ctrl"><label>Color curva 2</label><input type="color" id="km_c2" value="#34d399" style="min-width:60px;padding:3px;height:32px;cursor:pointer"></div>
+        <div class="ch-ctrl"><label>Mostrar IC 95%</label><select id="km_ci"><option value="1">Sí</option><option value="0">No</option></select></div>
+        <div class="ch-ctrl"><label>Título</label><input type="text" id="km_title" value="Curva de Kaplan-Meier" style="min-width:180px"></div>
+        <button class="btn" onclick="runKM()">Generar curva</button>
+      </div>
+      <div id="km_res"></div>
+      <div id="km_chart_wrap" style="margin-top:18px"></div>
+    </div>`;
+}
+
+function runKM(){
+  const timeCol=document.getElementById('km_time').value;
+  const eventCol=document.getElementById('km_event').value;
+  const stratCol=document.getElementById('km_strat').value;
+  const showCI=document.getElementById('km_ci').value==='1';
+  const title=document.getElementById('km_title').value;
+  const c1=document.getElementById('km_c1').value;
+  const c2=document.getElementById('km_c2').value;
+
+  const wrap=document.getElementById('km_chart_wrap');
+  wrap.innerHTML=`<div class="ch-wrap"><canvas id="km_canvas" style="max-height:420px"></canvas><button class="ch-export" onclick="exportChart('km_canvas','KaplanMeier')">🎨 Exportar</button></div>`;
+
+  const colors=[c1,c2,'#a78bfa','#fb923c','#f87171','#22d3ee'];
+
+  setTimeout(()=>{
+    let datasets=[];
+    let logRankResult=null;
+
+    if(stratCol){
+      const strats=[...new Set(DATA.map(r=>String(r[stratCol]).trim()).filter(v=>v))];
+      const curves=strats.map(s=>{
+        const sub=DATA.filter(r=>String(r[stratCol]).trim()===s);
+        const times=sub.map(r=>r[timeCol]),events=sub.map(r=>r[eventCol]);
+        return{name:s,km:kaplanMeier(times,events)};
+      });
+
+      if(curves.length===2){
+        logRankResult=logRank(curves[0].km,curves[1].km);
+      }
+
+      curves.forEach(({name,km},i)=>{
+        const pts=km.map(p=>({x:p.t,y:p.S}));
+        datasets.push({label:name,data:pts,borderColor:colors[i%6],borderWidth:2.5,pointRadius:0,stepped:'before',fill:false,tension:0});
+        if(showCI){
+          datasets.push({label:`IC 95% ${name}`,data:km.map(p=>({x:p.t,y:p.ci_hi})),borderColor:colors[i%6]+'55',borderWidth:1,borderDash:[3,3],pointRadius:0,stepped:'before',fill:false});
+          datasets.push({label:`_ci_lo_${name}`,data:km.map(p=>({x:p.t,y:p.ci_lo})),borderColor:colors[i%6]+'55',borderWidth:1,borderDash:[3,3],pointRadius:0,stepped:'before',fill:false});
+        }
+      });
+    }else{
+      const times=DATA.map(r=>r[timeCol]),events=DATA.map(r=>r[eventCol]);
+      const km=kaplanMeier(times,events);
+      const m50=km.find(p=>p.S<=0.5);
+      document.getElementById('km_res').innerHTML=statRows([['N total',DATA.length],['Eventos',km.reduce((a,p)=>a+p.d,0)],['Supervivencia mediana (aprox.)',m50?fmt(m50.t):'No alcanzada'],['S al último tiempo',fmt(km[km.length-1]?.S)]]);
+      datasets.push({label:'Supervivencia',data:km.map(p=>({x:p.t,y:p.S})),borderColor:c1,borderWidth:3,pointRadius:0,stepped:'before',fill:false});
+      if(showCI){
+        datasets.push({label:'IC 95% sup.',data:km.map(p=>({x:p.t,y:p.ci_hi})),borderColor:c1+'55',borderWidth:1,borderDash:[4,4],pointRadius:0,stepped:'before',fill:false});
+        datasets.push({label:'IC 95% inf.',data:km.map(p=>({x:p.t,y:p.ci_lo})),borderColor:c1+'55',borderWidth:1,borderDash:[4,4],pointRadius:0,stepped:'before',fill:false});
+      }
+    }
+
+    mkChart('km_canvas',{type:'line',data:{datasets},options:{
+      plugins:{
+        legend:{labels:{color:'#8892a4',font:{family:'Outfit',size:12},filter:item=>!item.text.startsWith('_ci_lo_')}},
+        title:{display:!!title,text:title,color:var_tx,font:{family:'Outfit',size:14,weight:'700'}}
+      },
+      scales:{
+        x:{title:{display:true,text:'Tiempo',color:'#8892a4'},min:0,ticks:{color:'#8892a4',font:{family:'Outfit',size:11}},grid:{color:'rgba(37,43,62,.8)'}},
+        y:{title:{display:true,text:'Probabilidad de supervivencia',color:'#8892a4'},min:0,max:1,ticks:{color:'#8892a4',font:{family:'Outfit',size:11},callback:v=>`${(v*100).toFixed(0)}%`},grid:{color:'rgba(37,43,62,.8)'}}
+      }
+    }});
+
+    if(logRankResult){
+      document.getElementById('km_res').innerHTML=statRows([['Test Log-rank χ²',fmt(logRankResult.chi2)]])+pBlock(logRankResult.p);
+    }
+  },80);
+}
+
+// workaround for CSS var in JS
+const var_tx = '#eef0f7';
+
+// ══════════════════════════════════════════════════
+//  PANEL: REGRESIÓN LOGÍSTICA
+// ══════════════════════════════════════════════════
+function renderRegresion(){
+  const qn=qnCols(),ql=qlCols();
+  document.getElementById('panelInner').innerHTML=`
+    <div class="card">
+      <div class="card-hd"><div class="ico red">📉</div>Regresión logística</div>
+      <div class="interp info" style="margin-bottom:18px">La variable dependiente debe ser binaria (0/1). Las variables independientes deben ser cuantitativas. Variables categóricas requieren codificación previa.</div>
+      <div class="fr">
+        <div class="fg"><label>Variable dependiente (binaria 0/1)</label><select id="rl_dep">${mkOpts([...ql,...qn])}</select></div>
+        <div class="fg"><label>Variables independientes</label>
+          <select id="rl_indep" multiple size="6" style="min-width:220px;height:140px">${qn.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+          <span style="font-size:10px;color:var(--tx2)">Ctrl+clic para selección múltiple</span>
+        </div>
+        <div class="fg"><label>Iteraciones GD</label><input type="number" id="rl_iters" value="1000" min="100" max="5000" style="min-width:100px"></div>
+        <button class="btn" onclick="runLogistic()" style="align-self:flex-start;margin-top:22px">Ejecutar</button>
+      </div>
+      <div id="rl_res"></div>
+      <div id="rl_forest" style="margin-top:20px"></div>
+      <div id="rl_roc" style="margin-top:20px"></div>
+    </div>`;
+}
+
+function runLogistic(){
+  const depCol=document.getElementById('rl_dep').value;
+  const indepCols=[...document.getElementById('rl_indep').selectedOptions].map(o=>o.value);
+  const iters=parseInt(document.getElementById('rl_iters').value)||1000;
+
+  if(!indepCols.length){document.getElementById('rl_res').innerHTML=`<div class="interp warn">⚠️ Selecciona al menos una variable independiente.</div>`;return;}
+
+  // Prepare data
+  const complete=DATA.filter(r=>{
+    const d=parseFloat(r[depCol]);
+    if(isNaN(d)||!(d===0||d===1))return false;
+    return indepCols.every(c=>!isNaN(parseFloat(r[c])));
+  });
+
+  if(complete.length<indepCols.length*5){document.getElementById('rl_res').innerHTML=`<div class="interp warn">⚠️ Datos insuficientes o la variable dependiente no es binaria 0/1. Registros completos: ${complete.length}</div>`;return;}
+
+  // Normalize X
+  const means_x=indepCols.map(c=>mean(complete.map(r=>parseFloat(r[c]))));
+  const sds_x=indepCols.map(c=>sd(complete.map(r=>parseFloat(r[c]))));
+  const X=complete.map(r=>indepCols.map((c,j)=>sds_x[j]?((parseFloat(r[c])-means_x[j])/sds_x[j]):0));
+  const y=complete.map(r=>parseFloat(r[depCol]));
+
+  const result=logisticRegression(X,y,0.05,iters);
+
+  // Table
+  let tbl=`<div class="tw" style="margin-bottom:16px"><table class="dt"><thead><tr><th>Variable</th><th>Coef. (β)</th><th>OR</th><th>IC 95% OR</th><th>z</th><th>p-valor</th><th>Sig.</th></tr></thead><tbody>`;
+  const names=['Intercepto',...indepCols];
+  result.coefs.forEach((c,i)=>{
+    const sig=c.p<0.05;
+    tbl+=`<tr><td><strong>${names[i]}</strong></td><td>${fmt(c.coef)}</td><td>${i===0?'—':fmt(c.OR)}</td><td>${i===0?'—':`${fmt(c.CI_lo)} — ${fmt(c.CI_hi)}`}</td><td>${fmt(c.z)}</td><td style="color:${sig?'var(--red)':'var(--grn)'}">${fmtP(c.p)}</td><td>${sig?'✓':''}</td></tr>`;
+  });
+  tbl+=`</tbody></table></div>`;
+  document.getElementById('rl_res').innerHTML=tbl+statRows([['N (completos)',complete.length],['AUC-ROC',isNaN(result.auc)?'—':fmt(result.auc)],['Iteraciones',iters]]);
+
+  // Forest plot
+  const fp=document.getElementById('rl_forest');
+  fp.innerHTML=`<div class="ch-wrap"><div class="ch-title">Forest Plot — Odds Ratios (IC 95%)</div><canvas id="rl_forest_canvas" style="max-height:300px"></canvas><button class="ch-export" onclick="exportChart('rl_forest_canvas','ForestPlot')">🎨 Exportar</button></div>`;
+  setTimeout(()=>{
+    const vars=indepCols;
+    const ORs=result.coefs.slice(1).map(c=>c.OR);
+    const lo=result.coefs.slice(1).map(c=>c.CI_lo);
+    const hi=result.coefs.slice(1).map(c=>c.CI_hi);
+    mkChart('rl_forest_canvas',{type:'bar',data:{labels:vars,datasets:[
+      {label:'OR',data:ORs,backgroundColor:ORs.map(o=>o>=1?'rgba(79,142,247,.6)':'rgba(248,113,113,.6)'),borderColor:ORs.map(o=>o>=1?'#4f8ef7':'#f87171'),borderWidth:2,borderRadius:4},
+    ]},options:{indexAxis:'y',...CHART_DEFAULTS,plugins:{...CHART_DEFAULTS.plugins,annotation:{annotations:{line1:{type:'line',xMin:1,xMax:1,borderColor:'#fbbf24',borderWidth:2,borderDash:[5,5]}}}}}});
+  },80);
+
+  // ROC curve
+  if(!isNaN(result.auc)){
+    const roc=document.getElementById('rl_roc');
+    roc.innerHTML=`<div class="ch-wrap"><div class="ch-title">Curva ROC — AUC = ${fmt(result.auc)}</div><canvas id="rl_roc_canvas" style="max-height:300px"></canvas><button class="ch-export" onclick="exportChart('rl_roc_canvas','ROC')">🎨 Exportar</button></div>`;
+    setTimeout(()=>{
+      const pairs=complete.map((r,i)=>({pred:result.sig(X[i].reduce((s,xi,j)=>s+result.w[j]*xi,result.b)),y:y[i]})).sort((a,b)=>b.pred-a.pred);
+      const pos=y.filter(v=>v===1).length,neg=y.filter(v=>v===0).length;
+      let tp=0,fp=0,pts=[{x:0,y:0}];
+      pairs.forEach(({pred,y:yi})=>{if(yi===1)tp++;else fp++;pts.push({x:fp/neg,y:tp/pos});});
+      pts.push({x:1,y:1});
+      mkChart('rl_roc_canvas',{type:'line',data:{datasets:[
+        {label:`ROC (AUC=${fmt(result.auc)})`,data:pts,borderColor:'#4f8ef7',borderWidth:2.5,pointRadius:0,fill:false,tension:0},
+        {label:'Azar',data:[{x:0,y:0},{x:1,y:1}],borderColor:'#8892a4',borderWidth:1.5,borderDash:[5,5],pointRadius:0,fill:false}
+      ]},options:{...CHART_DEFAULTS,plugins:{...CHART_DEFAULTS.plugins},scales:{x:{...CHART_DEFAULTS.scales.x,min:0,max:1,title:{display:true,text:'1 - Especificidad',color:'#8892a4'}},y:{...CHART_DEFAULTS.scales.y,min:0,max:1,title:{display:true,text:'Sensibilidad',color:'#8892a4'}}}}});
+    },100);
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  PANEL: DATOS
+// ══════════════════════════════════════════════════
+function renderDatos(){
+  const shown=COLS.filter(c=>c.type!=='excluir').map(c=>c.name);
+  let h=`<div class="card"><div class="card-hd"><div class="ico green">🗃</div>${DATA.length} registros · ${shown.length} columnas activas</div>
+  <div class="tw"><table class="dt"><thead><tr>${shown.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+  DATA.slice(0,300).forEach(row=>{h+=`<tr>${shown.map(c=>`<td>${row[c]!==undefined&&row[c]!==''?row[c]:'<span style="color:var(--br2)">—</span>'}</td>`).join('')}</tr>`;});
+  h+=`</tbody></table></div>`;
+  if(DATA.length>300)h+=`<div style="padding:10px;font-size:12px;color:var(--tx2)">Mostrando 300 de ${DATA.length} registros.</div>`;
+  h+=`</div>`;
+  document.getElementById('panelInner').innerHTML=h;
+}
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+setupLanding();
+// Global drag-drop on body for landing
+document.body.addEventListener('dragover',e=>{if(!DATA.length)e.preventDefault();});
+document.body.addEventListener('drop',e=>{if(!DATA.length){e.preventDefault();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);}});
+</script>
+</body>
+</html>
